@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2"
@@ -21,4 +24,4 @@
     "typescript": "^5.7.3"
   }
 }
-
+    "prisma": "^6.19.0",
