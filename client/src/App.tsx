@@ -54,11 +54,16 @@ function App() {
           {/* ── Root redirect based on role ────────── */}
           <Route path="/" element={<RoleRedirect />} />
 
-          {/* ── QR / Table entry ───────────────────── */}
+          {/* ── QR / Restaurant & Table entry ──────── */}
+          <Route path="/restaurant" element={<TableEntry />} />
+          <Route path="/restaurant/:restaurantId" element={<TableEntry />} />
+          <Route path="/restaurant/:restaurantId/table" element={<TableEntry />} />
           <Route
             path="/restaurant/:restaurantId/table/:tableId"
             element={<TableEntry />}
           />
+          <Route path="/select-table" element={<TableEntry />} />
+          <Route path="/tables" element={<TableEntry />} />
 
           {/* ── Customer Routes ────────────────────── */}
           <Route path="/customer" element={<CustomerShell />}>

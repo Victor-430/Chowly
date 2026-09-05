@@ -6,6 +6,7 @@ import {
   HiBookOpen,
   HiShoppingCart,
   HiClipboardDocumentList,
+  HiTableCells,
 } from 'react-icons/hi2';
 import { useCartStore } from '@/stores/cart-store';
 import { useRestaurantStore } from '@/stores/restaurant-store';
@@ -22,7 +23,7 @@ const navItems = [
 export default function CustomerShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { restaurant } = useRestaurantStore();
+  const { restaurant, tableNumber } = useRestaurantStore();
   const cartItemCount = useCartStore((s) => s.getItemCount());
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
@@ -43,10 +44,19 @@ export default function CustomerShell() {
             </span>
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => navigate('/restaurant')}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-xs font-semibold bg-amber/15 text-charcoal hover:bg-amber/25 border border-amber/30 transition-all active:scale-95"
+              title="Click to select or change table"
+            >
+              <HiTableCells className="w-3.5 h-3.5 text-amber" />
+              <span>Table {String(tableNumber || 4).padStart(2, '0')}</span>
+            </button>
+
             <button
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-              className="text-xs text-text-secondary hover:text-charcoal transition-colors"
+              className="text-xs text-text-secondary hover:text-charcoal transition-colors px-2 py-1 rounded-md hover:bg-border-light"
             >
               Switch Role
             </button>
@@ -69,15 +79,15 @@ export default function CustomerShell() {
       </header>
 
       {/* ── Main Content ───────────────────────────────── */}
-      <main className="flex-1 pb-20">
+      <main className="flex-1 pb-24">
         <div className="max-w-2xl mx-auto">
           <Outlet />
         </div>
       </main>
 
       {/* ── Bottom Navigation (mobile-first) ───────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-sm border-t border-border">
-        <div className="max-w-2xl mx-auto flex items-center justify-around py-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-surface/95 backdrop-blur-sm border-t border-border flex items-center">
+        <div className="w-full max-w-2xl mx-auto flex items-center justify-around px-2">
           {navItems.map((item) => {
             const isActive =
               item.path === '/customer'

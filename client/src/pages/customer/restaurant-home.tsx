@@ -64,6 +64,17 @@ export default function RestaurantHome() {
           <div>
             <p className="text-sm text-text-secondary">Dining in at</p>
             <p className="font-semibold text-lg">Table {tableNumber || '?'}</p>
+            <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Dining in at</p>
+            <div className="flex items-center gap-2.5 mt-0.5">
+              <p className="font-bold text-xl text-charcoal">Table {String(tableNumber || 4).padStart(2, '0')}</p>
+              <button
+                type="button"
+                onClick={() => navigate('/restaurant/the-grill-house/table')}
+                className="text-xs font-semibold text-amber hover:underline hover:text-amber/80 transition-colors"
+              >
+                Change Table
+              </button>
+            </div>
           </div>
           <Button 
             variant="amber"

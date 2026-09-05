@@ -78,10 +78,10 @@ export default function Menu() {
       />
 
       {cartCount > 0 && (
-        <div className="fixed bottom-6 left-0 right-0 px-4 z-30 pointer-events-none">
+        <div className="fixed bottom-20 left-0 right-0 px-4 z-30 pointer-events-none">
           <div className="max-w-md mx-auto pointer-events-auto">
             <Button 
-              className="w-full h-14 bg-amber hover:bg-amber/90 text-white rounded-full shadow-lg flex items-center justify-between px-6"
+              className="w-full h-14 bg-amber hover:bg-amber/90 text-white rounded-full shadow-lg flex items-center justify-between px-6 transition-all active:scale-[0.99]"
               onClick={() => navigate('/customer/cart')}
             >
               <div className="flex items-center">

@@ -43,7 +43,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 bg-warm-white min-h-screen">
+    <div className="max-w-2xl mx-auto px-4 py-6 bg-warm-white min-h-screen pb-44">
       <h1 className="text-2xl font-bold text-charcoal mb-6">Your Order</h1>
       
       <div className="bg-surface rounded-card border border-border shadow-sm mb-6 overflow-hidden">
@@ -57,7 +57,7 @@ export default function Cart() {
         ))}
       </div>
 
-      <div className="bg-surface rounded-card border border-border shadow-sm p-6 mb-24">
+      <div className="bg-surface rounded-card border border-border shadow-sm p-6 mb-8">
         <div className="flex justify-between items-center mb-3 text-text-secondary">
           <span>Subtotal</span>
           <span>{formatCurrency(getSubtotal())}</span>
@@ -73,13 +73,18 @@ export default function Cart() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-surface border-t border-border z-10">
-        <div className="max-w-2xl mx-auto">
+      {/* Floating Place Order bar positioned above the bottom mobile nav */}
+      <div className="fixed bottom-16 left-0 right-0 p-3 sm:p-4 bg-surface/95 backdrop-blur-md border-t border-border z-30 shadow-lg">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+          <div className="hidden sm:block">
+            <p className="text-xs text-text-secondary">Total Due</p>
+            <p className="text-lg font-bold text-charcoal">{formatCurrency(getTotal())}</p>
+          </div>
           <Button 
-            className="w-full h-14 bg-amber hover:bg-amber/90 text-white text-lg rounded-full"
+            className="w-full sm:w-auto sm:flex-1 h-12 sm:h-14 bg-amber hover:bg-amber/90 text-white text-base sm:text-lg font-semibold rounded-full shadow-md transition-all active:scale-[0.99]"
             onClick={handlePlaceOrder}
           >
-            Place Order
+            Place Order · {formatCurrency(getTotal())}
           </Button>
         </div>
       </div>
