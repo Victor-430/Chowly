@@ -5,6 +5,8 @@
   "description": "Chowly - Modern Digital Restaurant Dining Platform",
   "scripts": {
     "dev": "npm run dev --prefix client",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
     "build": "npm run build --prefix client",
     "preview": "npm run preview --prefix client"
   }
