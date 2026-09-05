@@ -60,5 +60,3 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
     set({ tableNumber, tableId: matchedId });
   },
 }));
-
-

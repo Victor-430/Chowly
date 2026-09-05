@@ -231,7 +231,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     ),
 
   getCustomerOrders: (tableNumber) =>
-    get().orders.filter((o) => o.tableNumber === tableNumber),
+    get().orders.filter((o) => tableNumber === undefined || o.tableNumber === tableNumber),
 
   updateOrderItem: (orderId, menuItemId, quantity) => {
     set((state) => ({
@@ -263,4 +263,3 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     // For now, it's handled by the feedback page directly
   },
 }));
-
