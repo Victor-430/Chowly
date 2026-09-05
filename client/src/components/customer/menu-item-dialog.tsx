@@ -36,7 +36,7 @@ export function MenuItemDialog({ item, open, onOpenChange }: MenuItemDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-surface">
+      <DialogContent className="sm:max-w-106.25 p-0 overflow-hidden bg-surface">
         <div className="relative w-full h-48">
           <img 
             src={item.image || '/placeholder-food.jpg'} 

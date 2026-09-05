@@ -195,12 +195,12 @@ export default function WaiterOrderDetail() {
                   <span>Order served · Awaiting customer payment</span>
                 </div>
               )}
-              {order.status === 'paid' && (
+              {/* {order.status === 'paid' && (
                 <div className="inline-flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-md font-medium">
                   <HiCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Order has been paid by customer</span>
                 </div>
-              )}
+              )} */}
               {isAssignmentBlocked && (
                 <div className="flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-md font-medium">
                   <HiExclamationTriangle className="w-4 h-4 text-amber-600 shrink-0" />
