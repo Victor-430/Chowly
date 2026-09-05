@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router';
 import { useRestaurantStore } from '@/stores/restaurant-store';
 import { useCartStore } from '@/stores/cart-store';
-import { menuItems } from '@/data/mock-data';
+import { menuItems as fallbackMenuItems } from '@/data/mock-data';
+import { menuApi } from '@/services/menu.api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { HiStar, HiClock } from 'react-icons/hi2';
@@ -17,12 +18,31 @@ export default function RestaurantHome() {
   const addItem = useCartStore((state) => state.addItem);
   
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [popularItems, setPopularItems] = useState<MenuItem[]>(() =>
+    fallbackMenuItems.filter((i) => i.isPopular)
+  );
 
   useEffect(() => {
     fetchRestaurant();
   }, [fetchRestaurant]);
-  
-  const popularItems = menuItems.filter((i) => i.isPopular);
+
+  useEffect(() => {
+    let isMounted = true;
+    menuApi
+      .list(restaurant.id)
+      .then((items) => {
+        if (isMounted && Array.isArray(items) && items.length > 0) {
+          const popular = items.filter((i) => i.isPopular);
+          setPopularItems(popular.length > 0 ? popular : items.slice(0, 6));
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch popular items live', err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [restaurant.id]);
 
   const handleQuickAdd = (item: MenuItem) => {
     addItem(item);

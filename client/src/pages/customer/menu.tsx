@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { menuItems } from '@/data/mock-data';
+import { menuItems as fallbackMenuItems } from '@/data/mock-data';
 import type { MenuCategory, MenuItem } from '@/types';
 import { useCartStore } from '@/stores/cart-store';
+import { useRestaurantStore } from '@/stores/restaurant-store';
+import { menuApi } from '@/services/menu.api';
 import { MenuSearch } from '@/components/customer/menu-search';
 import { CategoryTabs } from '@/components/customer/category-tabs';
 import { MenuCard } from '@/components/customer/menu-card';
 import { MenuItemDialog } from '@/components/customer/menu-item-dialog';
 import { EmptyState } from '@/components/shared/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { HiShoppingCart } from 'react-icons/hi2';
@@ -22,16 +25,45 @@ const CATEGORIES: { value: MenuCategory; label: string }[] = [
 
 export default function Menu() {
   const navigate = useNavigate();
+  const { restaurant } = useRestaurantStore();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<MenuCategory>('all');
+  const [items, setItems] = useState<MenuItem[]>(fallbackMenuItems);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   
   const { addItem, getItemCount, getTotal } = useCartStore();
 
-  const filteredItems = menuItems.filter((item) => {
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMenu = async () => {
+      setIsLoading(true);
+      try {
+        const data = await menuApi.list(restaurant.id, category === 'all' ? undefined : category);
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setItems(data);
+        }
+      } catch (err) {
+        console.warn('Could not load live menu, using cached items:', err);
+        // Fallback filter
+        const fallback = fallbackMenuItems.filter((i) =>
+          category === 'all' ? true : i.category === category
+        );
+        if (isMounted) setItems(fallback);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchMenu();
+    return () => {
+      isMounted = false;
+    };
+  }, [restaurant.id, category]);
+
+  const filteredItems = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = category === 'all' || item.category === category;
-    return matchesSearch && matchesCategory;
+    return matchesSearch;
   });
 
   const handleQuickAdd = (item: MenuItem) => {
@@ -50,7 +82,21 @@ export default function Menu() {
         </div>
       </div>
 
-      {filteredItems.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-surface rounded-card border border-border p-4 flex flex-col gap-3">
+              <Skeleton className="w-full h-40 rounded-card" />
+              <Skeleton className="w-3/4 h-5" />
+              <Skeleton className="w-full h-4" />
+              <div className="flex justify-between items-center mt-2">
+                <Skeleton className="w-16 h-6" />
+                <Skeleton className="w-8 h-8 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           {filteredItems.map((item) => (
             <MenuCard 
