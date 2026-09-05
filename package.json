@@ -1,0 +1,11 @@
+{
+  "name": "chowly",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Chowly - Modern Digital Restaurant Dining Platform",
+  "scripts": {
+    "dev": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "preview": "npm run preview --prefix client"
+  }
+}
