@@ -17,7 +17,7 @@ export default function Orders() {
     fetchOrders({ customerId: 'cust-001' });
   }, [fetchOrders]);
   
-  const orders = tableNumber ? getCustomerOrders(tableNumber) : [];
+  const orders = getCustomerOrders(tableNumber || undefined);
 
   if (orders.length === 0) {
     return (
@@ -59,8 +59,10 @@ export default function Orders() {
                   {formatDate(order.createdAt)} • {order.items.reduce((acc, item) => acc + item.quantity, 0)} items
                 </div>
               </div>
-              <div className="mt-4 sm:mt-0 font-bold text-lg text-charcoal">
-                {formatCurrency(order.total)}
+              <div className="mt-4 sm:mt-0 text-right">
+                <div className="font-bold text-lg text-charcoal">
+                  {formatCurrency(order.total)}
+                </div>
               </div>
             </CardContent>
           </Card>

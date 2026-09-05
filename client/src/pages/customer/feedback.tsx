@@ -1,6 +1,6 @@
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useOrderStore } from '@/stores/order-store';
-import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { feedbackApi } from '@/services/feedback.api';
 import { Button } from '@/components/ui/button';
@@ -74,7 +74,7 @@ export default function Feedback() {
         for (const comp of selectedComplaints) {
           await feedbackApi.createComplaint(order.id, {
             customerId: 'cust-001',
-            type: TYPE_MAP[comp] || 'OTHER',
+            type: TYPE_MAP[comp] || 'other',
             description: comment.trim() || comp,
           }).catch((err) => console.warn('Complaint API notice:', err));
         }

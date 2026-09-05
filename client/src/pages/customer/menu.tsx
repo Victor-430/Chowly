@@ -42,12 +42,16 @@ export default function Menu() {
         const data = await menuApi.list(restaurant.id, category === 'all' ? undefined : category);
         if (isMounted && Array.isArray(data) && data.length > 0) {
           setItems(data);
+        } else if (isMounted) {
+          const fallback = fallbackMenuItems.filter((i) =>
+            category === 'all' ? true : i.category.toLowerCase() === category.toLowerCase()
+          );
+          setItems(fallback);
         }
       } catch (err) {
         console.warn('Could not load live menu, using cached items:', err);
-        // Fallback filter
         const fallback = fallbackMenuItems.filter((i) =>
-          category === 'all' ? true : i.category === category
+          category === 'all' ? true : i.category.toLowerCase() === category.toLowerCase()
         );
         if (isMounted) setItems(fallback);
       } finally {
@@ -63,7 +67,8 @@ export default function Menu() {
 
   const filteredItems = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch;
+    const matchesCategory = category === 'all' || item.category.toLowerCase() === category.toLowerCase();
+    return matchesSearch && matchesCategory;
   });
 
   const handleQuickAdd = (item: MenuItem) => {
