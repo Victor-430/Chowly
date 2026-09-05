@@ -26,7 +26,7 @@ export function MenuCard({ item, onAdd, onClick }: MenuCardProps) {
           <h3 className="font-semibold text-base text-charcoal line-clamp-1" title={item.name}>
             {item.name}
           </h3>
-          <p className="text-xs sm:text-sm text-text-secondary line-clamp-2 mt-1 min-h-[2.5rem]">
+          <p className="text-xs sm:text-sm text-text-secondary line-clamp-2 mt-1 min-h-10">
             {item.description}
           </p>
         </div>

@@ -45,7 +45,7 @@ export function formatDateTime(isoString: string): string {
   });
 }
 
-/** Get the next valid status transition for an order */
+/** Get the next valid status transition for staff order workflow */
 export function getNextStatus(
   current: import('@/types').OrderStatus
 ): import('@/types').OrderStatus | null {
@@ -54,8 +54,6 @@ export function getNextStatus(
     assigned: 'preparing',
     preparing: 'ready',
     ready: 'served',
-    served: 'awaiting_payment',
-    awaiting_payment: 'paid',
   };
   return flow[current] ?? null;
 }

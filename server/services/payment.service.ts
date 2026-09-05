@@ -8,7 +8,7 @@ export async function createPayment(orderId: string, paymentType: PaymentType) {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({ where: { id: orderId } });
     if (!order) throw notFound('Order');
-    if (order.status !== 'AWAITING_PAYMENT') throw conflict('Order must be awaiting payment');
+    if (order.status !== 'AWAITING_PAYMENT' && order.status !== 'SERVED') throw conflict('Order must be served or awaiting payment');
 
     const now = new Date();
     const payment = await tx.payment.create({
