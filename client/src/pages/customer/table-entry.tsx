@@ -8,33 +8,43 @@ import { Input } from '@/components/ui/input';
 import { HiStar, HiClock, HiCheck, HiTableCells, HiArrowRight, HiArrowLeft } from 'react-icons/hi2';
 import { toast } from 'sonner';
 
-// Sample available tables in the restaurant (1 through 16)
-const AVAILABLE_TABLES = Array.from({ length: 16 }, (_, i) => i + 1);
-
 export default function TableEntry() {
-  const { tableId } = useParams();
+  const { tableId: paramTableId } = useParams();
   const navigate = useNavigate();
-  const { restaurant, tableNumber, setTable } = useRestaurantStore();
+  const { restaurant, tables, tableNumber, setTable, fetchTables, fetchRestaurant } = useRestaurantStore();
+  
   const [selectedTable, setSelectedTable] = useState<number>(() => {
-    if (tableId && !isNaN(Number(tableId))) {
-      return Number(tableId);
+    if (paramTableId && !isNaN(Number(paramTableId))) {
+      return Number(paramTableId);
     }
     return tableNumber || 4;
   });
   const [customTableInput, setCustomTableInput] = useState('');
 
+  // Fetch tables and restaurant on mount if not loaded
+  useEffect(() => {
+    fetchRestaurant();
+    fetchTables();
+  }, [fetchRestaurant, fetchTables]);
+
   // Update store when tableId is provided in URL
   useEffect(() => {
-    if (tableId && !isNaN(Number(tableId))) {
-      const num = Number(tableId);
-      setTable(num);
+    if (paramTableId && !isNaN(Number(paramTableId))) {
+      const num = Number(paramTableId);
+      const matched = tables.find((t) => t.number === num);
+      setTable(num, matched?.id);
       setSelectedTable(num);
     }
-  }, [tableId, setTable]);
+  }, [paramTableId, tables, setTable]);
 
-  const handleSelectTable = (num: number) => {
+  const displayTables = tables.length > 0
+    ? tables.map((t) => ({ number: t.number, id: t.id, status: t.status }))
+    : Array.from({ length: 15 }, (_, i) => ({ number: i + 1, id: undefined, status: 'available' }));
+
+  const handleSelectTable = (num: number, id?: string) => {
     setSelectedTable(num);
-    setTable(num);
+    const resolvedId = id || tables.find((t) => t.number === num)?.id;
+    setTable(num, resolvedId);
     toast.success(`Table ${String(num).padStart(2, '0')} selected`);
   };
 
@@ -159,26 +169,34 @@ export default function TableEntry() {
           </div>
 
           {/* Table Grid */}
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5 mb-6">
-            {AVAILABLE_TABLES.map((num) => {
-              const isSelected = selectedTable === num;
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-6">
+            {displayTables.map((tbl) => {
+              const isSelected = selectedTable === tbl.number;
+              const isOccupied = tbl.status === 'occupied';
               return (
                 <button
-                  key={num}
+                  key={tbl.id || tbl.number}
                   type="button"
-                  onClick={() => handleSelectTable(num)}
+                  onClick={() => handleSelectTable(tbl.number, tbl.id)}
                   className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 ${
                     isSelected
                       ? 'bg-charcoal text-white border-charcoal shadow-md scale-105 ring-2 ring-amber/50'
+                      : isOccupied
+                      ? 'bg-gray-100 text-text-secondary border-dashed border-border hover:border-amber/50'
                       : 'bg-warm-white text-charcoal border-border hover:border-amber hover:bg-amber/5'
                   }`}
                 >
-                  <span className="text-[10px] font-medium opacity-70">T</span>
-                  <span className="text-base font-bold leading-tight">
-                    {String(num).padStart(2, '0')}
+                  <div className="flex items-center justify-between w-full text-[10px] font-medium opacity-70">
+                    <span>Table</span>
+                    {isOccupied && <span className="text-amber text-[9px]">In Use</span>}
+                  </div>
+                  <span className="text-lg font-bold leading-tight my-1">
+                    {String(tbl.number).padStart(2, '0')}
                   </span>
-                  {isSelected && (
-                    <HiCheck className="w-3.5 h-3.5 text-amber mt-1" />
+                  {isSelected ? (
+                    <HiCheck className="w-3.5 h-3.5 text-amber mt-0.5" />
+                  ) : (
+                    <span className="text-[10px] text-text-secondary">4 seats</span>
                   )}
                 </button>
               );

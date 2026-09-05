@@ -7,16 +7,20 @@ import { Badge } from '@/components/ui/badge';
 import { HiStar, HiClock } from 'react-icons/hi2';
 import { MenuCard } from '@/components/customer/menu-card';
 import { MenuItemDialog } from '@/components/customer/menu-item-dialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { MenuItem } from '@/types';
 import { toast } from 'sonner';
 
 export default function RestaurantHome() {
   const navigate = useNavigate();
-  const { restaurant, tableNumber } = useRestaurantStore();
+  const { restaurant, tableNumber, fetchRestaurant } = useRestaurantStore();
   const addItem = useCartStore((state) => state.addItem);
   
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+
+  useEffect(() => {
+    fetchRestaurant();
+  }, [fetchRestaurant]);
   
   const popularItems = menuItems.filter((i) => i.isPopular);
 
