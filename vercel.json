@@ -4,6 +4,7 @@
   "buildCommand": "npm run build --prefix client",
   "outputDirectory": "client/dist",
   "installCommand": "npm install --prefix client",
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/(.*)",
@@ -22,3 +23,4 @@
     }
   ]
 }
+
