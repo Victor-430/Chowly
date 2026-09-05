@@ -78,7 +78,7 @@ export default function RestaurantHome() {
           </div>
           <Button 
             variant="amber"
-            size="lg"
+            size="sm"
             onClick={() => navigate('/customer/menu')}
           >
             View Menu
