@@ -64,3 +64,4 @@ export function getNextStatus(
 export function canModifyOrder(status: import('@/types').OrderStatus): boolean {
   return status === 'new' || status === 'assigned';
 }
+

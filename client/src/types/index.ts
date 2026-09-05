@@ -120,3 +120,4 @@ export interface Payment {
   status: PaymentStatus;
   paidAt?: string;
 }
+

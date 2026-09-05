@@ -76,3 +76,4 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   getTotal: () => get().getSubtotal() + get().getPackagingFee(),
 }));
+

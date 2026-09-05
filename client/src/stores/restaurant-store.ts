@@ -16,3 +16,4 @@ export const useRestaurantStore = create<RestaurantState>((set) => ({
   setRestaurant: (restaurant) => set({ restaurant }),
   setTable: (tableNumber) => set({ tableNumber }),
 }));
+

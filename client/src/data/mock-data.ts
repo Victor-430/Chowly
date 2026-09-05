@@ -146,7 +146,7 @@ export const menuItems: MenuItem[] = [
   // Desserts
   {
     id: 'menu-013',
-    name: 'Puff Puff',
+    name: 'Fried Doughs',
     description:
       'Golden fried dough balls dusted with powdered sugar. Soft, fluffy, and addictive.',
     price: 800,
@@ -157,7 +157,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 'menu-014',
-    name: 'Chin Chin',
+    name: 'Cookies',
     description:
       'Crispy fried pastry snack with a hint of nutmeg. A beloved Nigerian treat.',
     price: 600,
@@ -356,3 +356,4 @@ export const sampleOrders: Order[] = [
     updatedAt: new Date(Date.now() - 90 * 60000).toISOString(),
   },
 ];
+
