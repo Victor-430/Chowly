@@ -108,11 +108,23 @@ export default function RestaurantHome() {
         </div>
       </div>
 
-      <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 mt-8">
-        <h2 className="text-xl font-bold text-charcoal mb-4">Popular Today</h2>
-        <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-charcoal">Popular Today</h2>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/customer/menu')}
+            className="text-amber hover:text-amber/90 font-semibold"
+          >
+            View Full Menu →
+          </Button>
+        </div>
+
+        {/* Mobile: horizontal swipe. Desktop (md+): responsive grid */}
+        <div className="flex md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible pb-4 md:pb-0 scrollbar-hide">
           {popularItems.map((item) => (
-            <div key={item.id} className="min-w-70 w-70 shrink-0">
+            <div key={item.id} className="min-w-[260px] w-[260px] md:min-w-0 md:w-auto shrink-0 md:shrink flex flex-col">
               <MenuCard 
                 item={item} 
                 onClick={setSelectedItem} 

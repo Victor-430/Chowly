@@ -16,7 +16,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
       <img
         src={menuItem.image}
         alt={menuItem.name}
-        className="w-16 h-16 rounded-input object-cover flex-shrink-0"
+        className="w-16 h-16 rounded-input object-cover shrink-0"
       />
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start">

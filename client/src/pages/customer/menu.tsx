@@ -91,7 +91,7 @@ export default function Menu() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="bg-surface rounded-card border border-border p-4 flex flex-col gap-3">
-              <Skeleton className="w-full h-40 rounded-card" />
+              <Skeleton className="w-full h-44 rounded-card" />
               <Skeleton className="w-3/4 h-5" />
               <Skeleton className="w-full h-4" />
               <div className="flex justify-between items-center mt-2">

@@ -93,7 +93,7 @@ export default function TableEntry() {
             className="h-44 sm:h-52 w-full bg-cover bg-center relative"
             style={{ backgroundImage: `url(${restaurant.image})` }}
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/50 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-charcoal via-charcoal/50 to-transparent" />
             <div className="absolute bottom-0 left-0 p-5 w-full">
               <div className="flex items-center justify-between gap-2">
                 <div>
@@ -125,7 +125,7 @@ export default function TableEntry() {
           <CardContent className="p-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-full bg-amber/15 text-amber flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-amber/15 text-amber flex items-center justify-center shrink-0">
                   <HiTableCells className="w-6 h-6" />
                 </div>
                 <div>
@@ -213,7 +213,7 @@ export default function TableEntry() {
                 placeholder="Other table number..."
                 value={customTableInput}
                 onChange={(e) => setCustomTableInput(e.target.value)}
-                className="max-w-[200px]"
+                className="max-w-50"
               />
               <Button type="submit" variant="secondary">
                 Set Table
