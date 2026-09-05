@@ -111,7 +111,7 @@ export default function WaiterOrderDetail() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-warm-white min-h-screen">
+    <div className="p-4 sm:p-6 max-w-5xl lg:max-w-6xl mx-auto bg-warm-white min-h-screen">
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -123,7 +123,7 @@ export default function WaiterOrderDetail() {
               <HiArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-charcoal">{order.id}</h1>
+              {/* <h1 className="text-2xl font-bold text-charcoal">{order.id}</h1> */}
               <p className="text-gray-500 text-sm">{formatDateTime(order.createdAt)}</p>
             </div>
           </div>

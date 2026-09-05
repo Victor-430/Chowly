@@ -83,7 +83,7 @@ export default function RestaurantHome() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 mt-[-1.5rem] relative z-10">
+      <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 mt-[-1.5rem] relative z-10">
         <div className="bg-surface rounded-card shadow-md p-4 flex items-center justify-between border border-border">
           <div>
             {/* <p className="text-sm text-text-secondary">Dining in at</p>
@@ -110,7 +110,7 @@ export default function RestaurantHome() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 mt-8">
+      <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 mt-8">
         <h2 className="text-xl font-bold text-charcoal mb-4">Popular Today</h2>
         <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
           {popularItems.map((item) => (

@@ -31,7 +31,7 @@ export default function CustomerShell() {
     <div className="min-h-screen bg-warm-white flex flex-col">
       {/* ── Top Header ─────────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-sm border-b border-border px-4 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
             onClick={() => navigate('/customer')}
             className="flex items-center gap-2"
@@ -43,6 +43,37 @@ export default function CustomerShell() {
               · {restaurant.name}
             </span>
           </button>
+
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+            {navItems.map((item) => {
+              const isActive =
+                item.path === '/customer'
+                  ? location.pathname === '/customer'
+                  : location.pathname.startsWith(item.path);
+
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors relative',
+                    isActive
+                      ? 'bg-charcoal text-white shadow-sm'
+                      : 'text-text-secondary hover:text-charcoal hover:bg-border-light'
+                  )}
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                  {item.label === 'Cart' && cartItemCount > 0 && (
+                    <span className="bg-amber text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
             <button
@@ -79,15 +110,15 @@ export default function CustomerShell() {
       </header>
 
       {/* ── Main Content ───────────────────────────────── */}
-      <main className="flex-1 pb-24">
-        <div className="max-w-2xl mx-auto">
+      <main className="flex-1 pb-24 md:pb-10">
+        <div className="max-w-7xl mx-auto">
           <Outlet />
         </div>
       </main>
 
-      {/* ── Bottom Navigation (mobile-first) ───────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-surface/95 backdrop-blur-sm border-t border-border flex items-center">
-        <div className="w-full max-w-2xl mx-auto flex items-center justify-around px-2">
+      {/* ── Bottom Navigation (mobile only) ───────────── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-surface/95 backdrop-blur-sm border-t border-border flex items-center md:hidden">
+        <div className="w-full max-w-lg md:max-w-2xl mx-auto flex items-center justify-around px-2">
           {navItems.map((item) => {
             const isActive =
               item.path === '/customer'

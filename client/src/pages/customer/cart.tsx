@@ -59,38 +59,49 @@ export default function Cart() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 bg-warm-white min-h-screen pb-44">
-      <h1 className="text-2xl font-bold text-charcoal mb-6">Your Order</h1>
+    <div className="max-w-5xl mx-auto px-4 py-6 bg-warm-white min-h-screen pb-44">
+      <h1 className="text-2xl lg:text-3xl font-bold text-charcoal mb-6">Your Order</h1>
       
-      <div className="bg-surface rounded-card border border-border shadow-sm mb-6 overflow-hidden">
-        {items.map((item) => (
-          <CartItem 
-            key={item.menuItem.id} 
-            item={item} 
-            onUpdateQuantity={updateQuantity} 
-            onRemove={removeItem} 
-          />
-        ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+        <div className="lg:col-span-2 bg-surface rounded-card border border-border shadow-sm overflow-hidden">
+          {items.map((item) => (
+            <CartItem 
+              key={item.menuItem.id} 
+              item={item} 
+              onUpdateQuantity={updateQuantity} 
+              onRemove={removeItem} 
+            />
+          ))}
+        </div>
+
+        <div className="lg:col-span-1 bg-surface rounded-card border border-border shadow-sm p-6 lg:sticky lg:top-20">
+          <h2 className="text-lg font-bold text-charcoal mb-4">Order Summary</h2>
+          <div className="flex justify-between items-center mb-3 text-text-secondary">
+            <span>Subtotal</span>
+            <span>{formatCurrency(getSubtotal())}</span>
+          </div>
+          <div className="flex justify-between items-center mb-4 text-text-secondary">
+            <span>Packaging Fee</span>
+            <span>{formatCurrency(getPackagingFee())}</span>
+          </div>
+          <Separator className="my-4" />
+          <div className="flex justify-between items-center text-lg font-bold text-charcoal mb-6">
+            <span>Total</span>
+            <span>{formatCurrency(getTotal())}</span>
+          </div>
+
+          <Button 
+            disabled={isPlacing}
+            className="w-full hidden lg:flex h-12 bg-amber hover:bg-amber/90 text-white text-base font-semibold rounded-full shadow-md items-center justify-center transition-all active:scale-[0.99] disabled:opacity-50"
+            onClick={handlePlaceOrder}
+          >
+            {isPlacing ? 'Placing Order...' : `Place Order · ${formatCurrency(getTotal())}`}
+          </Button>
+        </div>
       </div>
 
-      <div className="bg-surface rounded-card border border-border shadow-sm p-6 mb-8">
-        <div className="flex justify-between items-center mb-3 text-text-secondary">
-          <span>Subtotal</span>
-          <span>{formatCurrency(getSubtotal())}</span>
-        </div>
-        <div className="flex justify-between items-center mb-4 text-text-secondary">
-          <span>Packaging Fee</span>
-          <span>{formatCurrency(getPackagingFee())}</span>
-        </div>
-        <Separator className="my-4" />
-        <div className="flex justify-between items-center text-lg font-bold text-charcoal">
-          <span>Total</span>
-          <span>{formatCurrency(getTotal())}</span>
-        </div>
-      </div>
-
-      {/* Floating Place Order bar positioned above the bottom mobile nav */}
-      <div className="fixed bottom-16 left-0 right-0 p-3 sm:p-4 bg-surface/95 backdrop-blur-md border-t border-border z-30 shadow-lg">
+      {/* Floating Place Order bar for mobile/tablet */}
+      <div className="fixed bottom-16 left-0 right-0 p-3 sm:p-4 bg-surface/95 backdrop-blur-md border-t border-border z-30 shadow-lg lg:hidden">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
           <div className="hidden sm:block">
             <p className="text-xs text-text-secondary">Total Due</p>

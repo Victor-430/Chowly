@@ -79,8 +79,8 @@ export default function Menu() {
   const cartCount = getItemCount();
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 pb-28 min-h-screen bg-warm-white">
-      <div className="sticky top-0 z-20 bg-warm-white pb-4 pt-2">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 min-h-screen bg-warm-white">
+      <div className="sticky top-0 z-20 bg-warm-white/95 backdrop-blur-sm pb-4 pt-2">
         <MenuSearch value={search} onChange={setSearch} />
         <div className="mt-4">
           <CategoryTabs categories={CATEGORIES} active={category} onChange={setCategory} />
@@ -88,8 +88,8 @@ export default function Menu() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="bg-surface rounded-card border border-border p-4 flex flex-col gap-3">
               <Skeleton className="w-full h-40 rounded-card" />
               <Skeleton className="w-3/4 h-5" />
@@ -102,7 +102,7 @@ export default function Menu() {
           ))}
         </div>
       ) : filteredItems.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-4">
           {filteredItems.map((item) => (
             <MenuCard 
               key={item.id} 

@@ -71,8 +71,8 @@ export default function Payment() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8 bg-warm-white min-h-screen">
-      <h1 className="text-2xl font-bold text-charcoal mb-6">Your Bill</h1>
+    <div className="max-w-xl lg:max-w-2xl mx-auto px-4 sm:px-6 py-8 bg-warm-white min-h-screen">
+      <h1 className="text-2xl sm:text-3xl font-bold text-charcoal mb-6">Your Bill</h1>
       
       <Card className="mb-6 shadow-sm border-border">
         <CardHeader className="pb-4">

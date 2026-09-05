@@ -111,8 +111,8 @@ export default function Feedback() {
   const showComplaints = rating > 0 && rating <= 2;
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8 bg-warm-white min-h-screen">
-      <h1 className="text-2xl font-bold text-charcoal text-center mb-8">How was your experience?</h1>
+    <div className="max-w-xl lg:max-w-2xl mx-auto px-4 sm:px-6 py-8 bg-warm-white min-h-screen">
+      <h1 className="text-2xl sm:text-3xl font-bold text-charcoal text-center mb-8">How was your experience?</h1>
       
       <div className="flex justify-center space-x-2 mb-8">
         {[1, 2, 3, 4, 5].map((star) => (

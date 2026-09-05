@@ -39,10 +39,10 @@ export default function Orders() {
   );
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 bg-warm-white min-h-screen">
-      <h1 className="text-2xl font-bold text-charcoal mb-6">Order History</h1>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-warm-white min-h-screen">
+      <h1 className="text-2xl sm:text-3xl font-bold text-charcoal mb-6">Order History</h1>
       
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {sortedOrders.map((order) => (
           <Card 
             key={order.id} 
@@ -52,7 +52,7 @@ export default function Orders() {
             <CardContent className="p-5 flex flex-col sm:flex-row justify-between sm:items-center">
               <div>
                 <div className="flex items-center space-x-3 mb-2">
-                  <span className="font-semibold text-lg">Order #{order.id}</span>
+                  {/* <span className="font-semibold text-lg">Order #{order.id}</span> */}
                   <OrderStatusBadge status={order.status} />
                 </div>
                 <div className="text-sm text-text-secondary">

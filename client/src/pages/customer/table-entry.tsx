@@ -74,7 +74,7 @@ export default function TableEntry() {
     <div className="min-h-screen bg-warm-white pb-16">
       {/* ── Top Bar ────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 bg-surface/95 backdrop-blur-sm border-b border-border px-4 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <button
             onClick={() => navigate('/customer')}
             className="flex items-center gap-2 text-charcoal hover:text-amber transition-colors text-sm font-medium"
@@ -87,7 +87,7 @@ export default function TableEntry() {
       </header>
 
       {/* ── Hero Restaurant Info ───────────────────────────── */}
-      <div className="max-w-2xl mx-auto px-4 pt-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div className="relative rounded-card overflow-hidden border border-border shadow-sm mb-6 bg-charcoal text-white">
           <div
             className="h-44 sm:h-52 w-full bg-cover bg-center relative"
@@ -169,7 +169,7 @@ export default function TableEntry() {
           </div>
 
           {/* Table Grid */}
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-6">
+          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 mb-6">
             {displayTables.map((tbl) => {
               const isSelected = selectedTable === tbl.number;
               const isOccupied = tbl.status === 'occupied';

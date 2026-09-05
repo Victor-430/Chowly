@@ -80,72 +80,75 @@ export async function createOrder(input: CreateOrderInput) {
   const ids = input.items.map((item) => item.menuItemId);
   if (new Set(ids).size !== ids.length)
     throw invalid("Each menu item may appear only once");
-  return prisma.$transaction(async (tx) => {
-    const [restaurant, customer, table, menuItems] = await Promise.all([
-      tx.restaurant.findUnique({ where: { id: input.restaurantId } }),
-      tx.customer.findUnique({ where: { id: input.customerId } }),
-      tx.restaurantTable.findUnique({ where: { id: input.tableId } }),
-      tx.menuItem.findMany({
-        where: {
-          id: { in: ids },
-          restaurantId: input.restaurantId,
-          availabilityStatus: true,
-        },
-      }),
-    ]);
-    if (!restaurant) throw notFound("Restaurant");
-    if (restaurant.status !== "OPEN") throw conflict("Restaurant is closed");
-    if (!customer) throw notFound("Customer");
-    if (!table || table.restaurantId !== input.restaurantId)
-      throw invalid("Table does not belong to this restaurant");
-    if (menuItems.length !== ids.length)
-      throw invalid(
-        "One or more menu items are missing, unavailable, or belong to another restaurant",
+  return prisma.$transaction(
+    async (tx) => {
+      const [restaurant, customer, table, menuItems] = await Promise.all([
+        tx.restaurant.findUnique({ where: { id: input.restaurantId } }),
+        tx.customer.findUnique({ where: { id: input.customerId } }),
+        tx.restaurantTable.findUnique({ where: { id: input.tableId } }),
+        tx.menuItem.findMany({
+          where: {
+            id: { in: ids },
+            restaurantId: input.restaurantId,
+            availabilityStatus: true,
+          },
+        }),
+      ]);
+      if (!restaurant) throw notFound("Restaurant");
+      if (restaurant.status !== "OPEN") throw conflict("Restaurant is closed");
+      if (!customer) throw notFound("Customer");
+      if (!table || table.restaurantId !== input.restaurantId)
+        throw invalid("Table does not belong to this restaurant");
+      if (menuItems.length !== ids.length)
+        throw invalid(
+          "One or more menu items are missing, unavailable, or belong to another restaurant",
+        );
+      const byId = new Map(menuItems.map((item) => [item.id, item]));
+      const lines = input.items.map((line) => {
+        const item = byId.get(line.menuItemId)!;
+        const subtotal = item.price.mul(line.quantity);
+        return {
+          ...line,
+          price: item.price,
+          subtotal,
+          prepTime: item.preparationTime,
+        };
+      });
+      const subtotal = lines.reduce(
+        (sum, line) => sum.add(line.subtotal),
+        new Prisma.Decimal(0),
       );
-    const byId = new Map(menuItems.map((item) => [item.id, item]));
-    const lines = input.items.map((line) => {
-      const item = byId.get(line.menuItemId)!;
-      const subtotal = item.price.mul(line.quantity);
-      return {
-        ...line,
-        price: item.price,
-        subtotal,
-        prepTime: item.preparationTime,
-      };
-    });
-    const subtotal = lines.reduce(
-      (sum, line) => sum.add(line.subtotal),
-      new Prisma.Decimal(0),
-    );
-    const packaging = new Prisma.Decimal(0);
-    const order = await tx.order.create({
-      data: {
-        customerId: input.customerId,
-        restaurantId: input.restaurantId,
-        tableId: input.tableId,
-        subtotal,
-        packagingMaterialCost: packaging,
-        totalAmount: subtotal.add(packaging),
-        estimatedWaitingTime: Math.max(...lines.map((line) => line.prepTime)),
-        items: {
-          create: lines.map((line) => ({
-            menuItemId: line.menuItemId,
-            quantity: line.quantity,
-            unitPrice: line.price,
-            subtotal: line.subtotal,
-            specialInstructions: line.specialInstructions?.trim() || null,
-          })),
+      const packaging = new Prisma.Decimal(0);
+      const order = await tx.order.create({
+        data: {
+          customerId: input.customerId,
+          restaurantId: input.restaurantId,
+          tableId: input.tableId,
+          subtotal,
+          packagingMaterialCost: packaging,
+          totalAmount: subtotal.add(packaging),
+          estimatedWaitingTime: Math.max(...lines.map((line) => line.prepTime)),
+          items: {
+            create: lines.map((line) => ({
+              menuItemId: line.menuItemId,
+              quantity: line.quantity,
+              unitPrice: line.price,
+              subtotal: line.subtotal,
+              specialInstructions: line.specialInstructions?.trim() || null,
+            })),
+          },
+          tracking: { create: { status: "NEW" } },
         },
-        tracking: { create: { status: "NEW" } },
-      },
-      include: orderInclude,
-    });
-    await tx.restaurantTable.update({
-      where: { id: table.id },
-      data: { status: "OCCUPIED" },
-    });
-    return presentOrder(order);
-  });
+        include: orderInclude,
+      });
+      await tx.restaurantTable.update({
+        where: { id: table.id },
+        data: { status: "OCCUPIED" },
+      });
+      return presentOrder(order);
+    },
+    { timeout: 15000, maxWait: 10000 },
+  );
 }
 
 export async function getOrder(orderId: string) {
