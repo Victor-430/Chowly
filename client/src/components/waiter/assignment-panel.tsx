@@ -29,17 +29,12 @@ export function AssignmentPanel({ order }: AssignmentPanelProps) {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-charcoal">Preparation Team</h3>
-        {!hasEither ? (
+        {!hasEither && (
           <span className="text-xs text-amber font-medium flex items-center gap-1">
             <HiExclamationCircle className="w-3.5 h-3.5" />
             Assign chef or bartender
           </span>
-        ) : (
-          <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-            <HiCheck className="w-3.5 h-3.5" />
-            Team assigned
-          </span>
-        )}
+        ) }
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

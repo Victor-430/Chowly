@@ -125,7 +125,7 @@ export default function WaiterShell() {
       )}
 
       {/* ── Main area ──────────────────────────────────── */}
-      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
+      <div className="flex-1 w-full min-w-0 lg:ml-60 flex flex-col min-h-screen overflow-x-hidden">
         {/* Mobile header */}
         <header className="sticky top-0 z-30 bg-surface/95 backdrop-blur-sm border-b border-border px-4 py-3 lg:hidden">
           <div className="flex items-center justify-between">
@@ -143,8 +143,8 @@ export default function WaiterShell() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 p-4 lg:p-6">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 w-full min-w-0 p-4 lg:p-6 pb-20 lg:pb-6 overflow-x-hidden">
+          <div className="w-full max-w-7xl mx-auto min-w-0">
             <Outlet />
           </div>
         </main>

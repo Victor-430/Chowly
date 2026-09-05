@@ -105,7 +105,7 @@ export default function WaiterOrderDetail() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl lg:max-w-6xl mx-auto bg-warm-white min-h-screen">
+    <div className="w-full min-w-0 max-w-5xl lg:max-w-6xl mx-auto bg-warm-white">
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

@@ -47,7 +47,7 @@ export default function WaiterOrders() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-warm-white min-h-screen">
+    <div className="w-full min-w-0 max-w-7xl mx-auto space-y-6 bg-warm-white">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-charcoal">All Orders</h1>
         <div className="relative w-full md:w-80">
@@ -62,14 +62,14 @@ export default function WaiterOrders() {
         </div>
       </header>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide w-full max-w-full min-w-0">
         {tabs.map(tab => (
           <Button
             key={tab}
             variant={activeTab === tab ? 'default' : 'secondary'}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              "rounded-full whitespace-nowrap",
+              "rounded-full whitespace-nowrap shrink-0",
               activeTab === tab ? "bg-charcoal text-white" : "bg-surface text-gray-600 hover:text-charcoal"
             )}
           >
@@ -85,7 +85,7 @@ export default function WaiterOrders() {
           description="No orders match your search and filter criteria."
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           {filteredOrders.map(order => (
             <OrderCard key={order.id} order={order} onClick={handleOrderClick} />
           ))}

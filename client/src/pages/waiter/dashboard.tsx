@@ -50,50 +50,50 @@ export default function WaiterDashboard() {
   const tabs: FilterTab[] = ['All', 'New', 'Preparing', 'Ready'];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8 bg-warm-white min-h-screen">
+    <div className="w-full min-w-0 max-w-7xl mx-auto space-y-6 sm:space-y-8 bg-warm-white">
       <header>
-        <h1 className="text-3xl font-bold text-charcoal">{getGreeting()}, David</h1>
-        <p className="text-gray-500 mt-1">Today's Overview</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-charcoal">{getGreeting()}, David</h1>
+        <p className="text-gray-500 mt-1 text-sm sm:text-base">Today's Overview</p>
       </header>
 
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatsCard 
           title="Active Orders" 
           count={activeOrders.length} 
-          icon={<HiClipboardDocumentList className="w-6 h-6" />} 
+          icon={<HiClipboardDocumentList className="w-5 h-5 sm:w-6 sm:h-6" />} 
           color="info" 
         />
         <StatsCard 
           title="Preparing" 
           count={preparingCount} 
-          icon={<HiFire className="w-6 h-6" />} 
+          icon={<HiFire className="w-5 h-5 sm:w-6 sm:h-6" />} 
           color="warning" 
         />
         <StatsCard 
           title="Ready" 
           count={readyCount} 
-          icon={<HiCheckCircle className="w-6 h-6" />} 
+          icon={<HiCheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />} 
           color="success" 
         />
         <StatsCard 
           title="Served Today" 
           count={servedTodayCount} 
-          icon={<HiCheck className="w-6 h-6" />} 
+          icon={<HiCheck className="w-5 h-5 sm:w-6 sm:h-6" />} 
           color="default" 
         />
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-4 min-w-0">
         <h2 className="text-xl font-bold text-charcoal">Active Orders</h2>
         
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide w-full max-w-full min-w-0">
           {tabs.map(tab => (
             <Button
               key={tab}
               variant={activeTab === tab ? 'default' : 'secondary'}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "rounded-full whitespace-nowrap",
+                "rounded-full whitespace-nowrap shrink-0",
                 activeTab === tab ? "bg-charcoal text-white" : "bg-surface text-gray-600 hover:text-charcoal"
               )}
             >
@@ -109,7 +109,7 @@ export default function WaiterDashboard() {
             description="There are currently no active orders matching this filter."
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {filteredOrders.map(order => (
               <OrderCard key={order.id} order={order} onClick={handleOrderClick} />
             ))}

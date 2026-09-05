@@ -18,14 +18,14 @@ const iconStyles = {
 
 export function StatsCard({ title, count, icon, color }: StatsCardProps) {
   return (
-    <Card className="bg-surface border-none shadow-sm h-full">
-      <CardContent className="p-6 flex flex-col justify-center h-full gap-4">
-        <div className={cn("w-12 h-12 rounded-full flex items-center justify-center text-xl", iconStyles[color])}>
+    <Card className="bg-surface border-none shadow-sm h-full overflow-hidden">
+      <CardContent className="p-3.5 sm:p-5 lg:p-6 flex flex-col justify-center h-full gap-2.5 sm:gap-4">
+        <div className={cn("w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-lg sm:text-xl shrink-0", iconStyles[color])}>
           {icon}
         </div>
-        <div>
-          <div className="text-3xl font-bold text-charcoal">{count}</div>
-          <div className="text-sm text-gray-500 font-medium">{title}</div>
+        <div className="min-w-0">
+          <div className="text-2xl sm:text-3xl font-bold text-charcoal leading-tight">{count}</div>
+          <div className="text-xs sm:text-sm text-gray-500 font-medium truncate mt-0.5" title={title}>{title}</div>
         </div>
       </CardContent>
     </Card>
