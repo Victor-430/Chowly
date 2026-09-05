@@ -96,7 +96,7 @@ export default function Payment() {
       </Card>
 
       <div className="bg-blue-50 text-blue-800 p-4 rounded-lg flex items-start mb-8 border border-blue-200">
-        <HiInformationCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+        <HiInformationCircle className="w-5 h-5 mr-3 shrink-0 mt-0.5" />
         <p className="text-sm">Demo Payment — No real payment will be processed. Feel free to proceed.</p>
       </div>
 

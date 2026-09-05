@@ -18,7 +18,6 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
       <CardContent className="p-5 flex flex-col gap-4">
         <div className="flex justify-between items-start">
           <div>
-            {/* <div className="font-semibold text-lg text-charcoal">{order.id}</div> */}
             <div className="text-xs text-gray-500 mt-1">{formatDateTime(order.createdAt)}</div>
           </div>
           <OrderStatusBadge status={order.status} />

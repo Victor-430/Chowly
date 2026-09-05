@@ -60,7 +60,7 @@ export default function RestaurantHome() {
         className="relative h-56 sm:h-72 w-full bg-cover bg-center"
         style={{ backgroundImage: `url(${restaurant.image || '/placeholder-restaurant.jpg'})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/20" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 to-black/20" />
         <div className="absolute bottom-0 left-0 p-6 w-full text-white">
           <div className="flex justify-between items-end">
             <div>
@@ -83,11 +83,9 @@ export default function RestaurantHome() {
         </div>
       </div>
 
-      <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 mt-[-1.5rem] relative z-10">
+      <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 -mt-6 relative z-10">
         <div className="bg-surface rounded-card shadow-md p-4 flex items-center justify-between border border-border">
           <div>
-            {/* <p className="text-sm text-text-secondary">Dining in at</p>
-            <p className="font-semibold text-lg">Table {tableNumber || '?'}</p> */}
             <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Dining in at</p>
             <div className="flex items-center gap-2.5 mt-0.5">
               <p className=" font-semibold lg:font-bold lg:text-xl text-charcoal">Table {String(tableNumber || 4).padStart(2, '0')}</p>
@@ -114,7 +112,7 @@ export default function RestaurantHome() {
         <h2 className="text-xl font-bold text-charcoal mb-4">Popular Today</h2>
         <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
           {popularItems.map((item) => (
-            <div key={item.id} className="min-w-[280px] w-[280px] flex-shrink-0">
+            <div key={item.id} className="min-w-70 w-70 shrink-0">
               <MenuCard 
                 item={item} 
                 onClick={setSelectedItem} 

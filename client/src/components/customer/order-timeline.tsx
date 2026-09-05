@@ -10,7 +10,7 @@ interface OrderTimelineProps {
 const STEPS = [
   { id: 'new', label: 'Order Received', mapTo: ['new'] },
   { id: 'assigned_waiter', label: 'Waiter Assigned', mapTo: ['assigned', 'preparing', 'ready', 'served'] },
-  { id: 'assigned_chef', label: 'Chef Assigned', mapTo: ['preparing', 'ready', 'served'] },
+  { id: 'assigned_chef', label: 'Kitchen / Bar Assigned', mapTo: ['preparing', 'ready', 'served'] },
   { id: 'preparing', label: 'Preparing', mapTo: ['preparing', 'ready', 'served'] },
   { id: 'ready', label: 'Ready', mapTo: ['ready', 'served'] },
   { id: 'served', label: 'Served', mapTo: ['served', 'paid'] },
@@ -31,7 +31,7 @@ export function OrderTimeline({ status, staffAssignment }: OrderTimelineProps) {
     }
     
     if (stepId === 'assigned_chef') {
-      if (staffAssignment.chefId) return isActive ? 'active' : 'completed';
+      if (staffAssignment.chefId || staffAssignment.bartenderId) return isActive ? 'active' : 'completed';
       return 'pending';
     }
     
@@ -53,7 +53,15 @@ export function OrderTimeline({ status, staffAssignment }: OrderTimelineProps) {
         
         let staffName = null;
         if (step.id === 'assigned_waiter' && staffAssignment.waiterId) staffName = "Waiter Assigned";
-        if (step.id === 'assigned_chef' && staffAssignment.chefId) staffName = "Chef Assigned";
+        if (step.id === 'assigned_chef') {
+          if (staffAssignment.chefName && staffAssignment.bartenderName) {
+            staffName = `${staffAssignment.chefName} (Chef) & ${staffAssignment.bartenderName} (Bartender)`;
+          } else if (staffAssignment.chefName) {
+            staffName = `${staffAssignment.chefName} (Chef)`;
+          } else if (staffAssignment.bartenderName) {
+            staffName = `${staffAssignment.bartenderName} (Bartender)`;
+          }
+        }
         
         return (
           <div key={step.id} className="relative flex items-start">

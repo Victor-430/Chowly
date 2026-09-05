@@ -71,22 +71,16 @@ export default function WaiterOrderDetail() {
   const nextStatus = getNextStatus(order.status);
   const canUpdate = !['paid', 'cancelled'].includes(order.status) && nextStatus;
 
-  // Assignment check: to mark as 'assigned', both chef and bartender must be assigned
+  // Assignment check: to mark as 'assigned', at least a chef or a bartender must be assigned
   const hasChef = Boolean(order.staffAssignment?.chefId);
   const hasBartender = Boolean(order.staffAssignment?.bartenderId);
   const isAssignmentRequired = nextStatus === 'assigned';
-  const isAssignmentComplete = hasChef && hasBartender;
+  const isAssignmentComplete = hasChef || hasBartender;
   const isAssignmentBlocked = isAssignmentRequired && !isAssignmentComplete;
 
   const handleUpdateStatus = async () => {
     if (isAssignmentBlocked) {
-      if (!hasChef && !hasBartender) {
-        toast.error('Both a chef and a bartender must be assigned before marking as assigned.');
-      } else if (!hasChef) {
-        toast.error('Please assign a chef before marking this order as assigned.');
-      } else {
-        toast.error('Please assign a bartender before marking this order as assigned.');
-      }
+      toast.error('Please assign either a chef or a bartender before marking as assigned.');
       return;
     }
 
@@ -123,7 +117,6 @@ export default function WaiterOrderDetail() {
               <HiArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              {/* <h1 className="text-2xl font-bold text-charcoal">{order.id}</h1> */}
               <p className="text-gray-500 text-sm">{formatDateTime(order.createdAt)}</p>
             </div>
           </div>
@@ -198,13 +191,9 @@ export default function WaiterOrderDetail() {
               </p>
               {isAssignmentBlocked && (
                 <div className="flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-md font-medium">
-                  <HiExclamationTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <HiExclamationTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>
-                    {!hasChef && !hasBartender
-                      ? 'Assign a chef and bartender above before marking as assigned'
-                      : !hasChef
-                      ? 'Assign a chef above before marking as assigned'
-                      : 'Assign a bartender above before marking as assigned'}
+                    Assign either a chef or a bartender above before marking as assigned
                   </span>
                 </div>
               )}
@@ -220,7 +209,7 @@ export default function WaiterOrderDetail() {
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300 shadow-none"
                     : "bg-amber hover:bg-amber/90 shadow-sm active:scale-[0.99]"
                 )}
-                title={isAssignmentBlocked ? "Assign chef and bartender first" : undefined}
+                title={isAssignmentBlocked ? "Assign either a chef or bartender first" : undefined}
               >
                 Mark as {statusLabels[nextStatus as string] || nextStatus}
               </Button>

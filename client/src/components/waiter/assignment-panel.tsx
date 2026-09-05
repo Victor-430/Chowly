@@ -23,15 +23,21 @@ export function AssignmentPanel({ order }: AssignmentPanelProps) {
 
   const hasChef = Boolean(order.staffAssignment.chefId);
   const hasBartender = Boolean(order.staffAssignment.bartenderId);
+  const hasEither = hasChef || hasBartender;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-charcoal">Preparation Team</h3>
-        {(!hasChef || !hasBartender) && (
+        {!hasEither ? (
           <span className="text-xs text-amber font-medium flex items-center gap-1">
             <HiExclamationCircle className="w-3.5 h-3.5" />
-            Assignment required
+            Assign chef or bartender
+          </span>
+        ) : (
+          <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+            <HiCheck className="w-3.5 h-3.5" />
+            Team assigned
           </span>
         )}
       </div>
@@ -50,8 +56,8 @@ export function AssignmentPanel({ order }: AssignmentPanelProps) {
               Assigned: {order.staffAssignment.chefName}
             </p>
           ) : (
-            <p className="text-xs text-amber-700 font-medium">
-              * Chef assignment required
+            <p className="text-xs text-text-secondary font-normal">
+              Select chef if order includes food
             </p>
           )}
         </div>
@@ -69,8 +75,8 @@ export function AssignmentPanel({ order }: AssignmentPanelProps) {
               Assigned: {order.staffAssignment.bartenderName}
             </p>
           ) : (
-            <p className="text-xs text-amber-700 font-medium">
-              * Bartender assignment required
+            <p className="text-xs text-text-secondary font-normal">
+              Select bartender if order includes drinks
             </p>
           )}
         </div>
