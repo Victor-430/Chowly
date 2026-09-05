@@ -1,6 +1,7 @@
 import type { Order } from '@/types';
 import { useOrderStore } from '@/stores/order-store';
 import { StaffSelector } from './staff-selector';
+import { HiCheck, HiExclamationCircle } from 'react-icons/hi2';
 import { toast } from 'sonner';
 
 interface AssignmentPanelProps {
@@ -20,9 +21,21 @@ export function AssignmentPanel({ order }: AssignmentPanelProps) {
     toast.success(`Assigned bartender: ${staffName}`);
   };
 
+  const hasChef = Boolean(order.staffAssignment.chefId);
+  const hasBartender = Boolean(order.staffAssignment.bartenderId);
+
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-lg font-semibold text-charcoal">Preparation Team</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-charcoal">Preparation Team</h3>
+        {(!hasChef || !hasBartender) && (
+          <span className="text-xs text-amber font-medium flex items-center gap-1">
+            <HiExclamationCircle className="w-3.5 h-3.5" />
+            Assignment required
+          </span>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <StaffSelector
@@ -31,12 +44,18 @@ export function AssignmentPanel({ order }: AssignmentPanelProps) {
             value={order.staffAssignment.chefId || ''}
             onChange={handleChefChange}
           />
-          {order.staffAssignment.chefName && (
-            <p className="text-xs text-text-secondary">
+          {hasChef ? (
+            <p className="text-xs text-emerald-600 flex items-center gap-1 font-medium">
+              <HiCheck className="w-3.5 h-3.5" />
               Assigned: {order.staffAssignment.chefName}
+            </p>
+          ) : (
+            <p className="text-xs text-amber-700 font-medium">
+              * Chef assignment required
             </p>
           )}
         </div>
+
         <div className="flex flex-col gap-2">
           <StaffSelector
             label="Bartender"
@@ -44,9 +63,14 @@ export function AssignmentPanel({ order }: AssignmentPanelProps) {
             value={order.staffAssignment.bartenderId || ''}
             onChange={handleBartenderChange}
           />
-          {order.staffAssignment.bartenderName && (
-            <p className="text-xs text-text-secondary">
+          {hasBartender ? (
+            <p className="text-xs text-emerald-600 flex items-center gap-1 font-medium">
+              <HiCheck className="w-3.5 h-3.5" />
               Assigned: {order.staffAssignment.bartenderName}
+            </p>
+          ) : (
+            <p className="text-xs text-amber-700 font-medium">
+              * Bartender assignment required
             </p>
           )}
         </div>

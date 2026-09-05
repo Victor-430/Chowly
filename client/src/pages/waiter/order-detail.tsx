@@ -1,15 +1,15 @@
 import { useNavigate, useParams } from 'react-router';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { HiArrowLeft } from 'react-icons/hi2';
+import { HiArrowLeft, HiExclamationTriangle } from 'react-icons/hi2';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { OrderStatusBadge } from '@/components/shared/order-status-badge';
 import { EmptyState } from '@/components/shared/empty-state';
 import { AssignmentPanel } from '@/components/waiter/assignment-panel';
 import { useOrderStore } from '@/stores/order-store';
-import { formatCurrency, formatDateTime, getNextStatus } from '@/lib/utils';
-import type { OrderStatus } from '@/types';
+import { formatCurrency, formatDateTime, getNextStatus, cn } from '@/lib/utils';
+import type { OrderStatus, OrderItem } from '@/types';
 
 export default function WaiterOrderDetail() {
   const { orderId } = useParams();
@@ -36,10 +36,28 @@ export default function WaiterOrderDetail() {
   const nextStatus = getNextStatus(order.status);
   const canUpdate = !['paid', 'cancelled'].includes(order.status) && nextStatus;
 
+  // Assignment check: to mark as 'assigned', both chef and bartender must be assigned
+  const hasChef = Boolean(order.staffAssignment?.chefId);
+  const hasBartender = Boolean(order.staffAssignment?.bartenderId);
+  const isAssignmentRequired = nextStatus === 'assigned';
+  const isAssignmentComplete = hasChef && hasBartender;
+  const isAssignmentBlocked = isAssignmentRequired && !isAssignmentComplete;
+
   const handleUpdateStatus = () => {
+    if (isAssignmentBlocked) {
+      if (!hasChef && !hasBartender) {
+        toast.error('Both a chef and a bartender must be assigned before marking as assigned.');
+      } else if (!hasChef) {
+        toast.error('Please assign a chef before marking this order as assigned.');
+      } else {
+        toast.error('Please assign a bartender before marking this order as assigned.');
+      }
+      return;
+    }
+
     if (nextStatus) {
       updateStatus(order.id, nextStatus as OrderStatus);
-      toast.success(`Order marked as ${nextStatus.replace('_', ' ')}`);
+      toast.success(`Order marked as ${statusLabels[nextStatus] || nextStatus.replace('_', ' ')}`);
     }
   };
 
@@ -95,7 +113,7 @@ export default function WaiterOrderDetail() {
           <div>
             <h3 className="text-lg font-semibold text-charcoal mb-4">Order Items</h3>
             <div className="space-y-4">
-              {order.items.map((item, idx) => (
+              {order.items.map((item: OrderItem, idx: number) => (
                 <div key={idx} className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2">
@@ -135,12 +153,37 @@ export default function WaiterOrderDetail() {
 
           <Separator />
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
-            <p className="text-gray-600 font-medium">
-              Current Status: <span className="text-charcoal">{statusLabels[order.status] || order.status}</span>
-            </p>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2">
+            <div className="space-y-1">
+              <p className="text-gray-600 font-medium">
+                Current Status: <span className="text-charcoal font-semibold">{statusLabels[order.status] || order.status}</span>
+              </p>
+              {isAssignmentBlocked && (
+                <div className="flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-md font-medium">
+                  <HiExclamationTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>
+                    {!hasChef && !hasBartender
+                      ? 'Assign a chef and bartender above before marking as assigned'
+                      : !hasChef
+                      ? 'Assign a chef above before marking as assigned'
+                      : 'Assign a bartender above before marking as assigned'}
+                  </span>
+                </div>
+              )}
+            </div>
+
             {canUpdate && (
-              <Button onClick={handleUpdateStatus} className="w-full mb-4 md:w-auto bg-amber hover:bg-amber/90 text-white">
+              <Button
+                onClick={handleUpdateStatus}
+                disabled={isAssignmentBlocked}
+                className={cn(
+                  "w-full mb-4 md:w-auto text-white font-semibold transition-all",
+                  isAssignmentBlocked
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300 shadow-none"
+                    : "bg-amber hover:bg-amber/90 shadow-sm active:scale-[0.99]"
+                )}
+                title={isAssignmentBlocked ? "Assign chef and bartender first" : undefined}
+              >
                 Mark as {statusLabels[nextStatus as string] || nextStatus}
               </Button>
             )}
