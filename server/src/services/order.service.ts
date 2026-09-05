@@ -98,7 +98,25 @@ export async function assignWaiter(orderId: string, waiterId: string) {
   const [order, waiter] = await Promise.all([prisma.order.findUnique({ where: { id: orderId } }), prisma.staff.findUnique({ where: { id: waiterId } })]);
   if (!order) throw notFound('Order');
   if (!waiter || waiter.role !== 'WAITER' || waiter.restaurantId !== order.restaurantId) throw invalid('Waiter must belong to the order restaurant');
-  return getOrderFromUpdate(await prisma.order.update({ where: { id: orderId }, data: { waiterId }, include: orderInclude }));
+  const updated = await prisma.order.update({ where: { id: orderId }, data: { waiterId }, include: orderInclude });
+  return presentOrder(updated);
 }
 
-const getOrderFromUpdate = (order: any) => presentOrder(order);
+export async function assignStaff(orderId: string, staffId: string, role: 'CHEF' | 'BARTENDER') {
+  const [order, staff] = await Promise.all([
+    prisma.order.findUnique({ where: { id: orderId } }),
+    prisma.staff.findUnique({ where: { id: staffId } }),
+  ]);
+  if (!order) throw notFound('Order');
+  if (!staff || staff.role !== role || staff.restaurantId !== order.restaurantId) {
+    throw invalid(`Staff member must be a ${role} at the order's restaurant`);
+  }
+  // Upsert: one chef and one bartender per order (@@unique([orderId, role]))
+  await prisma.orderAssignment.upsert({
+    where: { orderId_role: { orderId, role } },
+    create: { orderId, staffId, role },
+    update: { staffId },
+  });
+  const updated = await prisma.order.findUnique({ where: { id: orderId }, include: orderInclude });
+  return presentOrder(updated!);
+}

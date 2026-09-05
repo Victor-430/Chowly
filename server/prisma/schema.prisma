@@ -7,15 +7,63 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum RestaurantStatus { OPEN CLOSED }
-enum TableStatus { AVAILABLE OCCUPIED }
-enum Availability { AVAILABLE BUSY }
-enum StaffRole { WAITER CHEF BARTENDER }
-enum OrderStatus { NEW ASSIGNED PREPARING READY SERVED AWAITING_PAYMENT PAID CANCELLED }
-enum PaymentStatus { PENDING SUCCESS FAILED }
-enum PaymentType { CARD BANK_TRANSFER CASH }
-enum AssignmentStatus { ASSIGNED IN_PROGRESS COMPLETED }
-enum ComplaintType { FOOD_TOOK_TOO_LONG INCORRECT_ORDER POOR_SERVICE OTHER }
+enum RestaurantStatus {
+  OPEN
+  CLOSED
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+}
+
+enum Availability {
+  AVAILABLE
+  BUSY
+}
+
+enum StaffRole {
+  WAITER
+  CHEF
+  BARTENDER
+}
+
+enum OrderStatus {
+  NEW
+  ASSIGNED
+  PREPARING
+  READY
+  SERVED
+  AWAITING_PAYMENT
+  PAID
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum PaymentType {
+  CARD
+  BANK_TRANSFER
+  CASH
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ComplaintType {
+  FOOD_TOOK_TOO_LONG
+  INCORRECT_ORDER
+  POOR_SERVICE
+  OTHER
+}
+
 
 model Restaurant {
   id             String           @id @default(cuid())
