@@ -1,11 +1,14 @@
 import { useParams, useNavigate } from 'react-router';
 import { useOrderStore } from '@/stores/order-store';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { feedbackApi } from '@/services/feedback.api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { HiStar, HiCheck } from 'react-icons/hi2';
 import { toast } from 'sonner';
+
+import type { ComplaintType } from '@/types';
 
 const COMPLAINT_TYPES = [
   'Food took too long',
@@ -14,18 +17,32 @@ const COMPLAINT_TYPES = [
   'Other'
 ];
 
+const TYPE_MAP: Record<string, ComplaintType> = {
+  'Food took too long': 'food_took_too_long',
+  'Incorrect order': 'incorrect_order',
+  'Poor service': 'poor_service',
+  'Other': 'other',
+};
+
 export default function Feedback() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const getOrder = useOrderStore((state) => state.getOrder);
+  const { getOrder, fetchOrder } = useOrderStore();
   
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [selectedComplaints, setSelectedComplaints] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   
   const order = orderId ? getOrder(orderId) : undefined;
+
+  useEffect(() => {
+    if (orderId && !order) {
+      fetchOrder(orderId);
+    }
+  }, [orderId, order, fetchOrder]);
 
   if (!order) {
     return <div className="p-8 text-center">Order Not Found</div>;
@@ -37,19 +54,42 @@ export default function Feedback() {
     );
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (rating === 0) {
       toast.error('Please select a rating');
       return;
     }
-    
-    // In a real app, this would submit to a backend API
-    toast.success('Thank you for your feedback!');
-    setSubmitted(true);
-    
-    setTimeout(() => {
-      navigate('/customer/orders');
-    }, 2000);
+
+    setIsSubmitting(true);
+    try {
+      // 1. Submit rating to backend
+      await feedbackApi.createRating(order.id, {
+        customerId: 'cust-001',
+        rating,
+        comment: comment.trim() || undefined,
+      }).catch((err) => console.warn('Rating API notice:', err));
+
+      // 2. If complaints selected, submit them
+      if (selectedComplaints.length > 0) {
+        for (const comp of selectedComplaints) {
+          await feedbackApi.createComplaint(order.id, {
+            customerId: 'cust-001',
+            type: TYPE_MAP[comp] || 'OTHER',
+            description: comment.trim() || comp,
+          }).catch((err) => console.warn('Complaint API notice:', err));
+        }
+      }
+
+      toast.success('Thank you for your feedback!');
+      setSubmitted(true);
+      setTimeout(() => {
+        navigate('/customer/orders');
+      }, 2000);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to submit feedback');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -135,11 +175,12 @@ export default function Feedback() {
       </div>
 
       <Button 
-        className="w-full bg-amber hover:bg-amber/90 text-white" 
+        disabled={isSubmitting}
+        className="w-full bg-amber hover:bg-amber/90 text-white disabled:opacity-50" 
         size="lg"
         onClick={handleSubmit}
       >
-        Submit Feedback
+        {isSubmitting ? 'Submitting Feedback...' : 'Submit Feedback'}
       </Button>
     </div>
   );

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useOrderStore } from '@/stores/order-store';
 import { useRestaurantStore } from '@/stores/restaurant-store';
@@ -10,7 +11,11 @@ import { HiOutlineClock } from 'react-icons/hi2';
 export default function Orders() {
   const navigate = useNavigate();
   const { tableNumber } = useRestaurantStore();
-  const getCustomerOrders = useOrderStore((state) => state.getCustomerOrders);
+  const { getCustomerOrders, fetchOrders } = useOrderStore();
+
+  useEffect(() => {
+    fetchOrders({ customerId: 'cust-001' });
+  }, [fetchOrders]);
   
   const orders = tableNumber ? getCustomerOrders(tableNumber) : [];
 
