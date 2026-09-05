@@ -62,11 +62,11 @@ export default function RestaurantHome() {
       <div className="max-w-3xl mx-auto px-4 mt-[-1.5rem] relative z-10">
         <div className="bg-surface rounded-card shadow-md p-4 flex items-center justify-between border border-border">
           <div>
-            <p className="text-sm text-text-secondary">Dining in at</p>
-            <p className="font-semibold text-lg">Table {tableNumber || '?'}</p>
+            {/* <p className="text-sm text-text-secondary">Dining in at</p>
+            <p className="font-semibold text-lg">Table {tableNumber || '?'}</p> */}
             <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Dining in at</p>
             <div className="flex items-center gap-2.5 mt-0.5">
-              <p className="font-bold text-xl text-charcoal">Table {String(tableNumber || 4).padStart(2, '0')}</p>
+              <p className=" font-semibold lg:font-bold lg:text-xl text-charcoal">Table {String(tableNumber || 4).padStart(2, '0')}</p>
               <button
                 type="button"
                 onClick={() => navigate('/restaurant/the-grill-house/table')}

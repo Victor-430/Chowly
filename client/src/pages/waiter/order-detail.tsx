@@ -140,7 +140,7 @@ export default function WaiterOrderDetail() {
               Current Status: <span className="text-charcoal">{statusLabels[order.status] || order.status}</span>
             </p>
             {canUpdate && (
-              <Button onClick={handleUpdateStatus} className="w-full md:w-auto bg-amber hover:bg-amber/90 text-white">
+              <Button onClick={handleUpdateStatus} className="w-full mb-4 md:w-auto bg-amber hover:bg-amber/90 text-white">
                 Mark as {statusLabels[nextStatus as string] || nextStatus}
               </Button>
             )}
