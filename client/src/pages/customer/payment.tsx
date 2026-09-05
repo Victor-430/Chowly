@@ -57,7 +57,7 @@ export default function Payment() {
           <HiCheck className="w-10 h-10 text-green-600" />
         </motion.div>
         <h2 className="text-2xl font-bold text-charcoal mb-2">Payment Successful!</h2>
-        <p className="text-text-secondary mb-6">Order #{order.id} • {formatCurrency(order.total)}</p>
+        <p className="text-2xl font-bold text-charcoal mb-6">{formatCurrency(order.total)}</p>
         
         <Button 
           className="w-full bg-amber hover:bg-amber/90 text-white" 

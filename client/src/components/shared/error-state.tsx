@@ -19,7 +19,7 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex min-h-[300px] flex-col items-center justify-center p-8 text-center",
+        "flex min-h-75 flex-col items-center justify-center p-8 text-center",
         className
       )}
       {...props}
