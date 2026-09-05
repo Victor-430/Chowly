@@ -16,7 +16,7 @@ import type { OrderStatus, OrderItem } from '@/types';
 export default function WaiterOrderDetail() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { getOrder, updateStatus, fetchOrder } = useOrderStore();
+  const { getOrder, updateStatus, fetchOrder, assignWaiter } = useOrderStore();
   const [loading, setLoading] = useState(true);
   
   const order = orderId ? getOrder(orderId) : undefined;
@@ -78,7 +78,7 @@ export default function WaiterOrderDetail() {
   const isAssignmentComplete = hasChef && hasBartender;
   const isAssignmentBlocked = isAssignmentRequired && !isAssignmentComplete;
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     if (isAssignmentBlocked) {
       if (!hasChef && !hasBartender) {
         toast.error('Both a chef and a bartender must be assigned before marking as assigned.');
@@ -91,7 +91,10 @@ export default function WaiterOrderDetail() {
     }
 
     if (nextStatus) {
-      updateStatus(order.id, nextStatus as OrderStatus);
+      if (nextStatus === 'assigned' && !order.staffAssignment?.waiterId) {
+        await assignWaiter(order.id, 'staff-001', 'David Adeyemi');
+      }
+      await updateStatus(order.id, nextStatus as OrderStatus);
       toast.success(`Order marked as ${statusLabels[nextStatus] || nextStatus.replace('_', ' ')}`);
     }
   };
