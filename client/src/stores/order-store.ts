@@ -1,40 +1,79 @@
 import { create } from 'zustand';
 import { sampleOrders } from '@/data/mock-data';
-import type { Order, OrderStatus } from '@/types';
+import type { Order, OrderStatus, CartItem } from '@/types';
 import { generateOrderId } from '@/lib/utils';
-import type { CartItem } from '@/types';
+import { orderApi } from '@/services/order.api';
 
 interface OrderState {
   orders: Order[];
+  isLoading: boolean;
+  error: string | null;
+
   placeOrder: (params: {
     items: CartItem[];
     tableNumber: number;
+    tableId?: string;
     restaurantId: string;
-  }) => Order;
-  updateStatus: (orderId: string, status: OrderStatus) => void;
-  assignChef: (orderId: string, chefId: string, chefName: string) => void;
-  assignBartender: (orderId: string, bartenderId: string, bartenderName: string) => void;
-  assignWaiter: (orderId: string, waiterId: string, waiterName: string) => void;
+    customerId?: string;
+  }) => Promise<Order>;
+
+  fetchOrder: (orderId: string) => Promise<Order | null>;
+  fetchOrders: (params?: { restaurantId?: string; customerId?: string }) => Promise<void>;
+  updateStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  assignChef: (orderId: string, chefId: string, chefName: string) => Promise<void>;
+  assignBartender: (orderId: string, bartenderId: string, bartenderName: string) => Promise<void>;
+  assignWaiter: (orderId: string, waiterId: string, waiterName: string) => Promise<void>;
   getOrder: (orderId: string) => Order | undefined;
   getOrdersByStatus: (...statuses: OrderStatus[]) => Order[];
   getActiveOrders: () => Order[];
-  getCustomerOrders: (tableNumber: number) => Order[];
+  getCustomerOrders: (tableNumber?: number) => Order[];
   updateOrderItem: (orderId: string, menuItemId: string, quantity: number) => void;
   removeOrderItem: (orderId: string, menuItemId: string) => void;
   addRating: (orderId: string, rating: number, comment?: string) => void;
 }
 
 const PACKAGING_FEE = 200;
+const DEFAULT_CUSTOMER_ID = 'cust-001';
 
 export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [...sampleOrders],
+  isLoading: false,
+  error: null,
 
-  placeOrder: ({ items, tableNumber, restaurantId }) => {
+  placeOrder: async ({ items, tableNumber, tableId, restaurantId, customerId = DEFAULT_CUSTOMER_ID }) => {
+    set({ isLoading: true, error: null });
+
+    // Try backend API creation first
+    try {
+      if (tableId) {
+        const payload = {
+          customerId,
+          restaurantId,
+          tableId,
+          items: items.map((i) => ({
+            menuItemId: i.menuItem.id,
+            quantity: i.quantity,
+            specialInstructions: i.specialInstructions,
+          })),
+        };
+
+        const liveOrder = await orderApi.create(payload);
+        set((state) => ({
+          orders: [liveOrder, ...state.orders.filter((o) => o.id !== liveOrder.id)],
+          isLoading: false,
+        }));
+        return liveOrder;
+      }
+    } catch (err: any) {
+      console.warn('API order placement failed or offline, falling back to local order:', err);
+    }
+
+    // Fallback local order creation
     const subtotal = items.reduce(
       (sum, i) => sum + i.menuItem.price * i.quantity,
       0
     );
-    const order: Order = {
+    const fallbackOrder: Order = {
       id: generateOrderId(),
       restaurantId,
       tableNumber,
@@ -54,11 +93,46 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    set((state) => ({ orders: [order, ...state.orders] }));
-    return order;
+
+    set((state) => ({
+      orders: [fallbackOrder, ...state.orders],
+      isLoading: false,
+    }));
+    return fallbackOrder;
   },
 
-  updateStatus: (orderId, status) => {
+  fetchOrder: async (orderId: string) => {
+    try {
+      const order = await orderApi.getById(orderId);
+      if (order) {
+        set((state) => ({
+          orders: state.orders.some((o) => o.id === order.id)
+            ? state.orders.map((o) => (o.id === order.id ? order : o))
+            : [order, ...state.orders],
+        }));
+        return order;
+      }
+    } catch (err) {
+      console.warn(`Could not fetch order ${orderId} live:`, err);
+    }
+    return get().orders.find((o) => o.id === orderId) || null;
+  },
+
+  fetchOrders: async (params) => {
+    set({ isLoading: true });
+    try {
+      const res = await orderApi.list(params);
+      if (res && Array.isArray(res.orders)) {
+        set({ orders: res.orders, isLoading: false });
+      }
+    } catch (err: any) {
+      console.warn('Could not fetch orders list live:', err);
+      set({ isLoading: false });
+    }
+  },
+
+  updateStatus: async (orderId, status) => {
+    // Optimistic update
     set((state) => ({
       orders: state.orders.map((o) =>
         o.id === orderId
@@ -66,9 +140,18 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           : o
       ),
     }));
+
+    try {
+      const updated = await orderApi.updateStatus(orderId, status);
+      set((state) => ({
+        orders: state.orders.map((o) => (o.id === orderId ? updated : o)),
+      }));
+    } catch (err) {
+      console.error(`Failed to update status on server for order ${orderId}:`, err);
+    }
   },
 
-  assignChef: (orderId, chefId, chefName) => {
+  assignChef: async (orderId, chefId, chefName) => {
     set((state) => ({
       orders: state.orders.map((o) =>
         o.id === orderId
@@ -80,9 +163,18 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           : o
       ),
     }));
+
+    try {
+      const updated = await orderApi.assignStaff(orderId, chefId, 'CHEF');
+      set((state) => ({
+        orders: state.orders.map((o) => (o.id === orderId ? updated : o)),
+      }));
+    } catch (err) {
+      console.warn(`Failed to sync chef assignment on server for order ${orderId}:`, err);
+    }
   },
 
-  assignBartender: (orderId, bartenderId, bartenderName) => {
+  assignBartender: async (orderId, bartenderId, bartenderName) => {
     set((state) => ({
       orders: state.orders.map((o) =>
         o.id === orderId
@@ -94,9 +186,18 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           : o
       ),
     }));
+
+    try {
+      const updated = await orderApi.assignStaff(orderId, bartenderId, 'BARTENDER');
+      set((state) => ({
+        orders: state.orders.map((o) => (o.id === orderId ? updated : o)),
+      }));
+    } catch (err) {
+      console.warn(`Failed to sync bartender assignment on server for order ${orderId}:`, err);
+    }
   },
 
-  assignWaiter: (orderId, waiterId, waiterName) => {
+  assignWaiter: async (orderId, waiterId, waiterName) => {
     set((state) => ({
       orders: state.orders.map((o) =>
         o.id === orderId
@@ -108,6 +209,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           : o
       ),
     }));
+
+    try {
+      const updated = await orderApi.assignWaiter(orderId, waiterId);
+      set((state) => ({
+        orders: state.orders.map((o) => (o.id === orderId ? updated : o)),
+      }));
+    } catch (err) {
+      console.warn(`Failed to sync waiter assignment on server for order ${orderId}:`, err);
+    }
   },
 
   getOrder: (orderId) => get().orders.find((o) => o.id === orderId),

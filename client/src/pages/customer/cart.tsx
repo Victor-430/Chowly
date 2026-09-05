@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useCartStore } from '@/stores/cart-store';
 import { useOrderStore } from '@/stores/order-store';
@@ -14,18 +15,33 @@ export default function Cart() {
   const navigate = useNavigate();
   const { items, updateQuantity, removeItem, getSubtotal, getPackagingFee, getTotal, clearCart } = useCartStore();
   const { placeOrder } = useOrderStore();
-  const { tableNumber, restaurant } = useRestaurantStore();
+  const { tableNumber, tableId, tables, restaurant } = useRestaurantStore();
+  const [isPlacing, setIsPlacing] = useState(false);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!tableNumber || !restaurant) {
       toast.error('Missing table or restaurant information');
       return;
     }
 
-    const order = placeOrder({ items, tableNumber, restaurantId: restaurant.id });
-    clearCart();
-    toast.success('Order placed successfully!');
-    navigate(`/customer/orders/${order.id}`);
+    setIsPlacing(true);
+    try {
+      const resolvedTableId = tableId || tables.find((t) => t.number === tableNumber)?.id;
+      const order = await placeOrder({
+        items,
+        tableNumber,
+        tableId: resolvedTableId,
+        restaurantId: restaurant.id,
+      });
+
+      clearCart();
+      toast.success('Order placed successfully!');
+      navigate(`/customer/orders/${order.id}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to place order. Please try again.');
+    } finally {
+      setIsPlacing(false);
+    }
   };
 
   if (items.length === 0) {
@@ -81,10 +97,11 @@ export default function Cart() {
             <p className="text-lg font-bold text-charcoal">{formatCurrency(getTotal())}</p>
           </div>
           <Button 
-            className="w-full sm:w-auto sm:flex-1 h-12 sm:h-14 bg-amber hover:bg-amber/90 text-white text-base sm:text-lg font-semibold rounded-full shadow-md transition-all active:scale-[0.99]"
+            disabled={isPlacing}
+            className="w-full sm:w-auto sm:flex-1 h-12 sm:h-14 bg-amber hover:bg-amber/90 text-white text-base sm:text-lg font-semibold rounded-full shadow-md transition-all active:scale-[0.99] disabled:opacity-50"
             onClick={handlePlaceOrder}
           >
-            Place Order · {formatCurrency(getTotal())}
+            {isPlacing ? 'Placing Order...' : `Place Order · ${formatCurrency(getTotal())}`}
           </Button>
         </div>
       </div>

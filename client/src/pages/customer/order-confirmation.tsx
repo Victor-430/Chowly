@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useOrderStore } from '@/stores/order-store';
 import { motion } from 'framer-motion';
@@ -11,9 +12,43 @@ import { Separator } from '@/components/ui/separator';
 export default function OrderConfirmation() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const getOrder = useOrderStore((state) => state.getOrder);
+  const { getOrder, fetchOrder } = useOrderStore();
+  const [loading, setLoading] = useState(true);
   
   const order = orderId ? getOrder(orderId) : undefined;
+
+  useEffect(() => {
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    fetchOrder(orderId).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+
+    // Poll for status updates every 5 seconds if order is active
+    const interval = setInterval(() => {
+      if (orderId) {
+        fetchOrder(orderId);
+      }
+    }, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [orderId, fetchOrder]);
+
+  if (loading && !order) {
+    return (
+      <div className="p-12 text-center flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="w-10 h-10 border-4 border-amber border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-text-secondary">Loading your order details...</p>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
