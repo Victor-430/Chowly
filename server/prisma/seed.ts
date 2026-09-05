@@ -1,4 +1,6 @@
-import { PrismaClient, StaffRole } from '@prisma/client';
+import { PrismaClient, StaffRole } from "./generated/client";
+
+
 
 const prisma = new PrismaClient();
 
@@ -299,3 +301,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
