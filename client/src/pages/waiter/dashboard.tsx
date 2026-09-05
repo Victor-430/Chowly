@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { HiClipboardDocumentList, HiFire, HiCheckCircle, HiCheck } from 'react-icons/hi2';
 import { StatsCard } from '@/components/waiter/stats-card';
 import { OrderCard } from '@/components/waiter/order-card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { useOrderStore } from '@/stores/order-store';
+import { useRestaurantStore } from '@/stores/restaurant-store';
 import { getGreeting } from '@/lib/utils';
 import type { Order } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -14,11 +15,21 @@ type FilterTab = 'All' | 'New' | 'Preparing' | 'Ready';
 
 export default function WaiterDashboard() {
   const navigate = useNavigate();
-  const { getActiveOrders, orders } = useOrderStore();
+  const { getActiveOrders, orders, fetchOrders } = useOrderStore();
+  const { restaurant } = useRestaurantStore();
   const activeOrders = getActiveOrders();
   
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
 
+  useEffect(() => {
+    fetchOrders({ restaurantId: restaurant.id });
+
+    const interval = setInterval(() => {
+      fetchOrders({ restaurantId: restaurant.id });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [restaurant.id, fetchOrders]);
 
   const preparingCount = activeOrders.filter(o => o.status === 'preparing').length;
   const readyCount = activeOrders.filter(o => o.status === 'ready').length;

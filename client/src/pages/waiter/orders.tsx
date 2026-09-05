@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { HiMagnifyingGlass, HiClipboardDocumentList } from 'react-icons/hi2';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { OrderCard } from '@/components/waiter/order-card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { useOrderStore } from '@/stores/order-store';
+import { useRestaurantStore } from '@/stores/restaurant-store';
 import type { Order } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -13,9 +14,20 @@ type FilterTab = 'All' | 'New' | 'Assigned' | 'Preparing' | 'Ready' | 'Served' |
 
 export default function WaiterOrders() {
   const navigate = useNavigate();
-  const { orders } = useOrderStore();
+  const { orders, fetchOrders } = useOrderStore();
+  const { restaurant } = useRestaurantStore();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
+
+  useEffect(() => {
+    fetchOrders({ restaurantId: restaurant.id });
+
+    const interval = setInterval(() => {
+      fetchOrders({ restaurantId: restaurant.id });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [restaurant.id, fetchOrders]);
 
   const tabs: FilterTab[] = ['All', 'New', 'Assigned', 'Preparing', 'Ready', 'Served', 'Paid'];
 

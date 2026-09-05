@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { HiArrowLeft, HiExclamationTriangle } from 'react-icons/hi2';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { OrderStatusBadge } from '@/components/shared/order-status-badge';
 import { EmptyState } from '@/components/shared/empty-state';
 import { AssignmentPanel } from '@/components/waiter/assignment-panel';
@@ -14,9 +16,42 @@ import type { OrderStatus, OrderItem } from '@/types';
 export default function WaiterOrderDetail() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { getOrder, updateStatus } = useOrderStore();
+  const { getOrder, updateStatus, fetchOrder } = useOrderStore();
+  const [loading, setLoading] = useState(true);
   
   const order = orderId ? getOrder(orderId) : undefined;
+
+  useEffect(() => {
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    fetchOrder(orderId).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+
+    const interval = setInterval(() => {
+      if (orderId) {
+        fetchOrder(orderId);
+      }
+    }, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [orderId, fetchOrder]);
+
+  if (loading && !order) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto bg-warm-white min-h-screen space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+    );
+  }
 
   if (!order) {
     return (
