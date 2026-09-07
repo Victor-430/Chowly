@@ -27,7 +27,7 @@ const TYPE_MAP: Record<string, ComplaintType> = {
 export default function Feedback() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { getOrder, fetchOrder } = useOrderStore();
+  const { getOrder, fetchOrder, addRating } = useOrderStore();
   
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -62,12 +62,8 @@ export default function Feedback() {
 
     setIsSubmitting(true);
     try {
-      // 1. Submit rating to backend
-      await feedbackApi.createRating(order.id, {
-        customerId: 'cust-001',
-        rating,
-        comment: comment.trim() || undefined,
-      }).catch((err) => console.warn('Rating API notice:', err));
+      // 1. Submit rating via order store (updates local state + persists to backend)
+      await addRating(order.id, rating, comment.trim() || undefined);
 
       // 2. If complaints selected, submit them
       if (selectedComplaints.length > 0) {

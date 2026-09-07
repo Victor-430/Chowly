@@ -3,6 +3,7 @@ import { sampleOrders } from '@/data/mock-data';
 import type { Order, OrderStatus, CartItem } from '@/types';
 import { generateOrderId } from '@/lib/utils';
 import { orderApi } from '@/services/order.api';
+import { feedbackApi } from '@/services/feedback.api';
 
 interface OrderState {
   orders: Order[];
@@ -29,7 +30,7 @@ interface OrderState {
   getCustomerOrders: (tableNumber?: number) => Order[];
   updateOrderItem: (orderId: string, menuItemId: string, quantity: number) => void;
   removeOrderItem: (orderId: string, menuItemId: string) => void;
-  addRating: (orderId: string, rating: number, comment?: string) => void;
+  addRating: (orderId: string, rating: number, comment?: string, customerId?: string) => Promise<void>;
 }
 
 const PACKAGING_FEE = 200;
@@ -328,8 +329,29 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     get().updateOrderItem(orderId, menuItemId, 0);
   },
 
-  addRating: (_orderId, _rating, _comment) => {
-    // In a real app this would persist to the backend
-    // For now, it's handled by the feedback page directly
+  addRating: async (orderId, rating, comment, customerId = DEFAULT_CUSTOMER_ID) => {
+    // Optimistically update order rating locally
+    set((state) => ({
+      orders: state.orders.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              rating: { orderId, rating, comment: comment?.trim() },
+              updatedAt: new Date().toISOString(),
+            }
+          : o
+      ),
+    }));
+
+    // Persist to backend API
+    try {
+      await feedbackApi.createRating(orderId, {
+        customerId,
+        rating,
+        comment: comment?.trim() || undefined,
+      });
+    } catch (err: any) {
+      console.warn(`Failed to submit rating to backend for order ${orderId}:`, err);
+    }
   },
 }));

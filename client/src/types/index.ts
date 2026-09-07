@@ -82,6 +82,7 @@ export interface Order {
   staffAssignment: StaffAssignment;
   createdAt: string; // ISO string
   updatedAt: string;
+  rating?: Rating;
 }
 
 // ─── Staff ──────────────────────────────────────────────
