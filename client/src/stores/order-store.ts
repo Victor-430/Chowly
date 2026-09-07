@@ -36,13 +36,18 @@ interface OrderState {
   addComplaint: (orderId: string, type: ComplaintType, description: string, customerId?: string) => Promise<void>;
 }
 
-const DEFAULT_CUSTOMER_ID = 'cust-001';
+export function generateUniqueCustomerId(): string {
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return `cust_${window.crypto.randomUUID()}`;
+  }
+  return `cust_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
 
 export const useOrderStore = create<OrderState>()(
   persist(
     (set, get) => ({
       orders: [],
-      customerId: DEFAULT_CUSTOMER_ID,
+      customerId: generateUniqueCustomerId(),
       customerOrderIds: [],
       isLoading: false,
       error: null,
@@ -51,7 +56,7 @@ export const useOrderStore = create<OrderState>()(
 
       placeOrder: async ({ items, tableNumber, tableId, restaurantId, customerId }) => {
         set({ isLoading: true, error: null });
-        const resolvedCustomerId = customerId || get().customerId || DEFAULT_CUSTOMER_ID;
+        const resolvedCustomerId = customerId || get().customerId || generateUniqueCustomerId();
 
         try {
           const payload: CreateOrderPayload = {
@@ -336,7 +341,8 @@ export const useOrderStore = create<OrderState>()(
         get().updateOrderItem(orderId, menuItemId, 0);
       },
 
-      addRating: async (orderId, rating, comment, customerId = DEFAULT_CUSTOMER_ID) => {
+      addRating: async (orderId, rating, comment, customerId) => {
+        const resolvedCustomerId = customerId || get().customerId;
         set((state) => ({
           orders: state.orders.map((o) =>
             o.id === orderId
@@ -351,7 +357,7 @@ export const useOrderStore = create<OrderState>()(
 
         try {
           const saved = await feedbackApi.createRating(orderId, {
-            customerId: customerId || get().customerId || DEFAULT_CUSTOMER_ID,
+            customerId: resolvedCustomerId,
             rating,
             comment: comment?.trim() || undefined,
           });
@@ -379,7 +385,8 @@ export const useOrderStore = create<OrderState>()(
         }
       },
 
-      addComplaint: async (orderId, type, description, customerId = DEFAULT_CUSTOMER_ID) => {
+      addComplaint: async (orderId, type, description, customerId) => {
+        const resolvedCustomerId = customerId || get().customerId;
         const tempComplaint: Complaint = {
           orderId,
           type,
@@ -401,7 +408,7 @@ export const useOrderStore = create<OrderState>()(
 
         try {
           const saved = await feedbackApi.createComplaint(orderId, {
-            customerId: customerId || get().customerId || DEFAULT_CUSTOMER_ID,
+            customerId: resolvedCustomerId,
             type,
             description: description.trim(),
           });
@@ -434,6 +441,24 @@ export const useOrderStore = create<OrderState>()(
     }),
     {
       name: 'chowly-orders',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (!persistedState) return persistedState;
+        // If state was on version 0/1 or has legacy shared 'cust-001'
+        if (version < 2 || !persistedState.customerId || persistedState.customerId === 'cust-001') {
+          return {
+            ...persistedState,
+            customerId: generateUniqueCustomerId(),
+            // Purge any legacy shared orders belonging to cust-001 that this device didn't place
+            orders: Array.isArray(persistedState.orders)
+              ? persistedState.orders.filter((o: any) =>
+                  persistedState.customerOrderIds?.includes(o.id)
+                )
+              : [],
+          };
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
         orders: state.orders,
         customerId: state.customerId,
