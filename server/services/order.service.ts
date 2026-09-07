@@ -192,9 +192,12 @@ export async function updateOrderStatus(
 ) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { assignments: true },
+    include: orderInclude,
   });
   if (!order) throw notFound("Order");
+  if (order.status === nextStatus) {
+    return presentOrder(order);
+  }
   if (!transitions[order.status].includes(nextStatus))
     throw conflict(`Cannot transition from ${order.status} to ${nextStatus}`);
   if (nextStatus === "ASSIGNED" && !order.waiterId)
