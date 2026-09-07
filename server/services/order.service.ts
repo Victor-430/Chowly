@@ -203,13 +203,17 @@ export async function getOrder(orderId: string) {
 export async function listOrders(
   restaurantId?: string,
   customerId?: string,
+  tableNumber?: number,
   page = 1,
-  limit = 20,
+  limit = 50,
 ) {
-  const where = {
+  const where: any = {
     ...(restaurantId ? { restaurantId } : {}),
     ...(customerId ? { customerId } : {}),
   };
+  if (tableNumber !== undefined && !isNaN(tableNumber)) {
+    where.table = { tableNumber };
+  }
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
       where,

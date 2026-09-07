@@ -16,10 +16,11 @@ export const getOrder = asyncHandler(async (req, res) => {
 export const listOrders = asyncHandler(async (req, res) => {
   const restaurantId = req.query.restaurantId as string | undefined;
   const customerId = req.query.customerId as string | undefined;
+  const tableNumber = req.query.tableNumber ? parseInt(req.query.tableNumber as string, 10) : undefined;
   const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
 
-  const result = await orderService.listOrders(restaurantId, customerId, page, limit);
+  const result = await orderService.listOrders(restaurantId, customerId, tableNumber, page, limit);
   ok(res, result, 'Orders retrieved successfully');
 });
 
