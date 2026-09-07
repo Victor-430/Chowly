@@ -308,10 +308,12 @@ export const useOrderStore = create<OrderState>()(
         const { orders, customerOrderIds, customerId } = get();
         return orders
           .filter((o) => {
-            if (customerOrderIds.includes(o.id)) return true;
-            if (o.customerId && o.customerId === customerId) return true;
-            if (tableNumber !== undefined && o.tableNumber === tableNumber) return true;
-            return false;
+            const isMyOrder = customerOrderIds.includes(o.id) || (o.customerId && o.customerId === customerId);
+            if (!isMyOrder) return false;
+            if (tableNumber !== undefined) {
+              return o.tableNumber === tableNumber;
+            }
+            return true;
           })
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       },

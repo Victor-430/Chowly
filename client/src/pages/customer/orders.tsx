@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useOrderStore } from '@/stores/order-store';
-import { useRestaurantStore } from '@/stores/restaurant-store';
 import { OrderStatusBadge } from '@/components/shared/order-status-badge';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,14 +9,13 @@ import { HiOutlineClock, HiStar } from 'react-icons/hi2';
 
 export default function Orders() {
   const navigate = useNavigate();
-  const { tableNumber } = useRestaurantStore();
   const { getCustomerOrders, fetchOrders, customerId, isLoading } = useOrderStore();
 
   useEffect(() => {
     fetchOrders({ customerId });
   }, [fetchOrders, customerId]);
   
-  const orders = getCustomerOrders(tableNumber || undefined);
+  const orders = getCustomerOrders();
 
   if (isLoading && orders.length === 0) {
     return (
