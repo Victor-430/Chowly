@@ -16,6 +16,7 @@ export interface CreateOrderPayload {
 export interface ListOrdersParams {
   restaurantId?: string;
   customerId?: string;
+  tableNumber?: number;
   page?: number;
   limit?: number;
 }
@@ -41,6 +42,7 @@ export const orderApi = {
     const query = new URLSearchParams();
     if (params?.restaurantId) query.set('restaurantId', params.restaurantId);
     if (params?.customerId) query.set('customerId', params.customerId);
+    if (params?.tableNumber !== undefined) query.set('tableNumber', String(params.tableNumber));
     if (params?.page) query.set('page', String(params.page));
     if (params?.limit) query.set('limit', String(params.limit));
 
