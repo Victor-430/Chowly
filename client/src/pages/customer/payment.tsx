@@ -21,15 +21,12 @@ export default function Payment() {
   const order = orderId ? getOrder(orderId) : undefined;
 
   useEffect(() => {
-    if (orderId && !order) {
-      fetchOrder(orderId);
     if (orderId) {
       if (!order) setIsLoading(true);
       fetchOrder(orderId).finally(() => {
         setIsLoading(false);
       });
     }
-  }, [orderId, order, fetchOrder]);
   }, [orderId, fetchOrder]);
 
   if (isLoading && !order) {
@@ -41,7 +38,6 @@ export default function Payment() {
   }
 
   if (!order) {
-    return <div className="p-8 text-center">Order Not Found</div>;
     return <div className="p-8 text-center text-text-secondary">Order Not Found</div>;
   }
 
@@ -61,10 +57,6 @@ export default function Payment() {
       toast.success('Payment processed successfully');
       setIsSuccess(true);
     } catch (err: any) {
-      console.warn('API payment failed or offline, updating locally:', err);
-      await updateStatus(order.id, 'paid');
-      toast.success('Payment processed successfully');
-      setIsSuccess(true);
       const errorMsg = err?.response?.data?.message || err?.message || '';
       if (
         errorMsg.toLowerCase().includes('already been paid') ||
@@ -82,7 +74,6 @@ export default function Payment() {
     }
   };
 
-  if (isSuccess) {
   if (isPaid) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
@@ -96,13 +87,6 @@ export default function Payment() {
         <h2 className="text-2xl font-bold text-charcoal mb-2">Payment Successful!</h2>
         <p className="text-2xl font-bold text-charcoal mb-6">{formatCurrency(order.total)}</p>
         
-        <Button 
-          className="w-full bg-amber hover:bg-amber/90 text-white" 
-          size="lg"
-          onClick={() => navigate(`/customer/feedback/${order.id}`)}
-        >
-          Rate Your Experience
-        </Button>
         <div className="space-y-3">
           <Button 
             className="w-full bg-amber hover:bg-amber/90 text-white" 

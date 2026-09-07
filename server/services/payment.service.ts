@@ -9,19 +9,6 @@ export async function createPayment(orderId: string, paymentType: PaymentType) {
     const order = await tx.order.findUnique({ where: { id: orderId } });
     if (!order) throw notFound('Order');
     if (order.status === 'CANCELLED') throw conflict('Cannot pay for a cancelled order');
-    if (order.status === 'PAID') {
-      const existing = await tx.payment.findFirst({ where: { orderId } });
-      if (existing) {
-        return {
-          id: existing.id,
-          orderId: existing.orderId,
-          amount: toNumber(existing.amount),
-          status: existing.status.toLowerCase(),
-          paymentType: existing.paymentType.toLowerCase(),
-          paidAt: existing.paidAt,
-          createdAt: existing.createdAt,
-        };
-      }
     if (order.status === 'PAID' || order.paymentStatus === 'SUCCESS') {
       throw conflict('This order has already been paid');
     }
