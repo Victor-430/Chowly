@@ -34,7 +34,7 @@ export default function WaiterOrders() {
   const filteredOrders = orders.filter(o => {
     const matchesSearch = 
       o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.tableNumber.toString().includes(search);
+      (o.tableNumber?.toString().includes(search) ?? false);
     
     if (!matchesSearch) return false;
     
