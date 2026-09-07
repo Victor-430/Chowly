@@ -22,6 +22,8 @@ export async function createPayment(orderId: string, paymentType: PaymentType) {
           createdAt: existing.createdAt,
         };
       }
+    if (order.status === 'PAID' || order.paymentStatus === 'SUCCESS') {
+      throw conflict('This order has already been paid');
     }
 
     const now = new Date();
