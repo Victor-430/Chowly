@@ -103,14 +103,31 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   fetchOrder: async (orderId: string) => {
     try {
-      const order = await orderApi.getById(orderId);
-      if (order) {
-        set((state) => ({
-          orders: state.orders.some((o) => o.id === order.id)
-            ? state.orders.map((o) => (o.id === order.id ? order : o))
-            : [order, ...state.orders],
-        }));
-        return order;
+      const incoming = await orderApi.getById(orderId);
+      if (incoming) {
+        set((state) => {
+          const existing = state.orders.find((o) => o.id === incoming.id);
+          const merged: Order = existing
+            ? {
+                ...incoming,
+                staffAssignment: {
+                  waiterId: incoming.staffAssignment?.waiterId || existing.staffAssignment?.waiterId,
+                  waiterName: incoming.staffAssignment?.waiterName || existing.staffAssignment?.waiterName,
+                  chefId: incoming.staffAssignment?.chefId || existing.staffAssignment?.chefId,
+                  chefName: incoming.staffAssignment?.chefName || existing.staffAssignment?.chefName,
+                  bartenderId: incoming.staffAssignment?.bartenderId || existing.staffAssignment?.bartenderId,
+                  bartenderName: incoming.staffAssignment?.bartenderName || existing.staffAssignment?.bartenderName,
+                },
+              }
+            : incoming;
+
+          return {
+            orders: existing
+              ? state.orders.map((o) => (o.id === incoming.id ? merged : o))
+              : [merged, ...state.orders],
+          };
+        });
+        return incoming;
       }
     } catch (err) {
       console.warn(`Could not fetch order ${orderId} live:`, err);
@@ -123,7 +140,27 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     try {
       const res = await orderApi.list(params);
       if (res && Array.isArray(res.orders)) {
-        set({ orders: res.orders, isLoading: false });
+        set((state) => {
+          const serverMap = new Map(res.orders.map((o) => [o.id, o]));
+          const mergedOrders = state.orders.map((existing) => {
+            const incoming = serverMap.get(existing.id);
+            if (!incoming) return existing;
+            serverMap.delete(existing.id);
+            return {
+              ...incoming,
+              staffAssignment: {
+                waiterId: incoming.staffAssignment?.waiterId || existing.staffAssignment?.waiterId,
+                waiterName: incoming.staffAssignment?.waiterName || existing.staffAssignment?.waiterName,
+                chefId: incoming.staffAssignment?.chefId || existing.staffAssignment?.chefId,
+                chefName: incoming.staffAssignment?.chefName || existing.staffAssignment?.chefName,
+                bartenderId: incoming.staffAssignment?.bartenderId || existing.staffAssignment?.bartenderId,
+                bartenderName: incoming.staffAssignment?.bartenderName || existing.staffAssignment?.bartenderName,
+              },
+            };
+          });
+          const newOrders = Array.from(serverMap.values());
+          return { orders: [...mergedOrders, ...newOrders], isLoading: false };
+        });
       }
     } catch (err: any) {
       console.warn('Could not fetch orders list live:', err);

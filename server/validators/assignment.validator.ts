@@ -5,6 +5,11 @@ export const validateAssignment = (body: unknown) => {
   if (!body || typeof body !== 'object') throw invalid('Request body is required');
   const value = body as Record<string, unknown>;
   requireString(value.waiterId, 'waiterId', 100);
+  if (value.waiterId !== undefined && value.waiterId !== null) {
+    requireString(value.waiterId, 'waiterId', 100);
+  }
   requireString(value.staffId, 'staffId', 100);
   if (value.role !== 'CHEF' && value.role !== 'BARTENDER') throw invalid('role must be CHEF or BARTENDER');
+  const roleStr = typeof value.role === 'string' ? value.role.toUpperCase() : '';
+  if (roleStr !== 'CHEF' && roleStr !== 'BARTENDER') throw invalid('role must be CHEF or BARTENDER');
 };
