@@ -16,15 +16,47 @@ export class ApiError extends Error {
   }
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export function getApiBaseUrl(): string {
+  const envUrl = import.meta.env.VITE_API_URL?.trim();
 
+  let url: string;
+  if (envUrl) {
+    url = envUrl;
+  } else if (import.meta.env.DEV) {
+    url = 'http://localhost:5000/api';
+  } else {
+    // Production default (Railway deployment)
+    url = 'https://chowly.up.railway.app/api';
+  }
+
+  // Prepend protocol if omitted (e.g. "chowly.up.railway.app" or "localhost:5000")
+  if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/')) {
+    const isLocal = url.includes('localhost') || url.includes('127.0.0.1');
+    url = `${isLocal ? 'http://' : 'https://'}${url}`;
+  }
+
+  // Remove trailing slashes
+  url = url.replace(/\/+$/, '');
+
+  // Append /api if not already part of the path (unless it is a root relative path '/')
+  if (!url.endsWith('/api') && !url.includes('/api/')) {
+    url = `${url}/api`;
+  }
+
+  return url;
+}
+
+export const BASE_URL = getApiBaseUrl();
+if (import.meta.env.DEV) {
+  console.log(`[API] Base URL (${import.meta.env.MODE}):`, BASE_URL);
+}
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    ...options.headers,
+    ...options.headers, 
   };
 
   try {
