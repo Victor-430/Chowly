@@ -1,4 +1,4 @@
-import { PrismaClient, StaffRole } from "./generated/client";
+import { PrismaClient, StaffRole } from "@prisma/client";
 
 
 
