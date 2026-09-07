@@ -11,14 +11,22 @@ import { HiOutlineClock, HiStar } from 'react-icons/hi2';
 export default function Orders() {
   const navigate = useNavigate();
   const { tableNumber } = useRestaurantStore();
-  const { getCustomerOrders, fetchOrders } = useOrderStore();
+  const { getCustomerOrders, fetchOrders, customerId, isLoading } = useOrderStore();
 
   useEffect(() => {
-    fetchOrders({ customerId: 'cust-001' });
-    fetchOrders();
-  }, [fetchOrders]);
+    fetchOrders({ customerId });
+  }, [fetchOrders, customerId]);
   
   const orders = getCustomerOrders(tableNumber || undefined);
+
+  if (isLoading && orders.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12 min-h-[60vh] flex flex-col justify-center items-center">
+        <div className="w-10 h-10 border-4 border-amber border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-text-secondary">Loading your orders...</p>
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (

@@ -30,6 +30,10 @@ export default function OrderConfirmation() {
 
     // Poll for status updates every 5 seconds if order is active
     const interval = setInterval(() => {
+      const current = orderId ? getOrder(orderId) : undefined;
+      if (current && ['paid', 'cancelled'].includes(current.status)) {
+        return;
+      }
       if (orderId) {
         fetchOrder(orderId);
       }
@@ -39,7 +43,7 @@ export default function OrderConfirmation() {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [orderId, fetchOrder]);
+  }, [orderId, fetchOrder, getOrder]);
 
   if (loading && !order) {
     return (
