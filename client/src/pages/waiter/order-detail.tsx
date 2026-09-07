@@ -18,6 +18,7 @@ export default function WaiterOrderDetail() {
   const navigate = useNavigate();
   const { getOrder, updateStatus, fetchOrder, assignWaiter } = useOrderStore();
   const [loading, setLoading] = useState(true);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   
   const order = orderId ? getOrder(orderId) : undefined;
 
@@ -33,7 +34,7 @@ export default function WaiterOrderDetail() {
     });
 
     const interval = setInterval(() => {
-      if (orderId) {
+      if (orderId && !isUpdatingStatus) {
         fetchOrder(orderId);
       }
     }, 5000);
@@ -42,7 +43,7 @@ export default function WaiterOrderDetail() {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [orderId, fetchOrder]);
+  }, [orderId, fetchOrder, isUpdatingStatus]);
 
   if (loading && !order) {
     return (
@@ -62,7 +63,7 @@ export default function WaiterOrderDetail() {
         <EmptyState 
           icon={<HiArrowLeft className="w-12 h-12" />}
           title="Order Not Found"
-          description={`Order ID ${orderId} does not exist.`}
+          description={`Order does not exist.`}
         />
       </div>
     );
@@ -79,17 +80,25 @@ export default function WaiterOrderDetail() {
   const isAssignmentBlocked = isAssignmentRequired && !isAssignmentComplete;
 
   const handleUpdateStatus = async () => {
+    if (isUpdatingStatus) return;
     if (isAssignmentBlocked) {
       toast.error('Please assign either a chef or a bartender before marking as assigned.');
       return;
     }
 
     if (nextStatus) {
-      if (nextStatus === 'assigned' && !order.staffAssignment?.waiterId) {
-        await assignWaiter(order.id, 'staff-001', 'David Adeyemi');
+      setIsUpdatingStatus(true);
+      try {
+        if (nextStatus === 'assigned' && !order.staffAssignment?.waiterId) {
+          await assignWaiter(order.id, 'staff-001', 'David Adeyemi');
+        }
+        await updateStatus(order.id, nextStatus as OrderStatus);
+        toast.success(`Order marked as ${statusLabels[nextStatus] || nextStatus.replace('_', ' ')}`);
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to update order status');
+      } finally {
+        setIsUpdatingStatus(false);
       }
-      await updateStatus(order.id, nextStatus as OrderStatus);
-      toast.success(`Order marked as ${statusLabels[nextStatus] || nextStatus.replace('_', ' ')}`);
     }
   };
 
@@ -120,7 +129,14 @@ export default function WaiterOrderDetail() {
               <p className="text-gray-500 text-sm">{formatDateTime(order.createdAt)}</p>
             </div>
           </div>
-          <OrderStatusBadge status={order.status} />
+          <div className="flex items-center gap-2">
+            <OrderStatusBadge status={order.status} />
+            {isUpdatingStatus && (
+              <span className="text-xs bg-amber/10 text-amber font-semibold px-2.5 py-0.5 rounded-full animate-pulse">
+                Updating...
+              </span>
+            )}
+          </div>
         </header>
 
         <div className="bg-surface rounded-xl p-6 shadow-sm space-y-6">
@@ -186,9 +202,20 @@ export default function WaiterOrderDetail() {
 
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2">
             <div className="space-y-1">
-              <p className="text-gray-600 font-medium">
-                Current Status: <span className="text-charcoal font-semibold">{statusLabels[order.status] || order.status}</span>
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-gray-600 font-medium">Current Status:</p>
+                {isUpdatingStatus ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full font-semibold animate-pulse">
+                    <svg className="animate-spin h-3.5 w-3.5 text-amber-600" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating status...
+                  </span>
+                ) : (
+                  <span className="text-charcoal font-semibold">{statusLabels[order.status] || order.status}</span>
+                )}
+              </div>
               
               {isAssignmentBlocked && (
                 <div className="flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-md font-medium">
@@ -203,16 +230,26 @@ export default function WaiterOrderDetail() {
             {canUpdate && (
               <Button
                 onClick={handleUpdateStatus}
-                disabled={isAssignmentBlocked}
+                disabled={isAssignmentBlocked || isUpdatingStatus}
                 className={cn(
-                  "w-full mb-4 md:w-auto text-white font-semibold transition-all",
-                  isAssignmentBlocked
+                  "w-full mb-4 md:w-auto text-white font-semibold transition-all flex items-center justify-center gap-2",
+                  isAssignmentBlocked || isUpdatingStatus
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300 shadow-none"
                     : "bg-amber hover:bg-amber/90 shadow-sm active:scale-[0.99]"
                 )}
                 title={isAssignmentBlocked ? "Assign either a chef or bartender first" : undefined}
               >
-                Mark as {statusLabels[nextStatus as string] || nextStatus}
+                {isUpdatingStatus ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Updating to {statusLabels[nextStatus as string] || nextStatus}...</span>
+                  </>
+                ) : (
+                  <span>Mark as {statusLabels[nextStatus as string] || nextStatus}</span>
+                )}
               </Button>
             )}
           </div>

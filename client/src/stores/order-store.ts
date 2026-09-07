@@ -169,7 +169,35 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   updateStatus: async (orderId, status) => {
-    // Optimistic update
+    try {
+      const updated = await orderApi.updateStatus(orderId, status);
+      if (updated) {
+        set((state) => ({
+          orders: state.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...updated,
+                  status: updated.status || status,
+                  staffAssignment: {
+                    waiterId: updated.staffAssignment?.waiterId || o.staffAssignment?.waiterId,
+                    waiterName: updated.staffAssignment?.waiterName || o.staffAssignment?.waiterName,
+                    chefId: updated.staffAssignment?.chefId || o.staffAssignment?.chefId,
+                    chefName: updated.staffAssignment?.chefName || o.staffAssignment?.chefName,
+                    bartenderId: updated.staffAssignment?.bartenderId || o.staffAssignment?.bartenderId,
+                    bartenderName: updated.staffAssignment?.bartenderName || o.staffAssignment?.bartenderName,
+                  },
+                  updatedAt: new Date().toISOString(),
+                }
+              : o
+          ),
+        }));
+        return;
+      }
+    } catch (err) {
+      console.warn(`Failed to update status on server for order ${orderId}, applying local update:`, err);
+    }
+
+    // Fallback local update (offline / mock data)
     set((state) => ({
       orders: state.orders.map((o) =>
         o.id === orderId
@@ -177,15 +205,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           : o
       ),
     }));
-
-    try {
-      const updated = await orderApi.updateStatus(orderId, status);
-      set((state) => ({
-        orders: state.orders.map((o) => (o.id === orderId ? updated : o)),
-      }));
-    } catch (err) {
-      console.error(`Failed to update status on server for order ${orderId}:`, err);
-    }
   },
 
   assignChef: async (orderId, chefId, chefName) => {
@@ -249,9 +268,23 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     try {
       const updated = await orderApi.assignWaiter(orderId, waiterId);
-      set((state) => ({
-        orders: state.orders.map((o) => (o.id === orderId ? updated : o)),
-      }));
+      if (updated) {
+        set((state) => ({
+          orders: state.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...updated,
+                  status: o.status, // preserve the current order status
+                  staffAssignment: {
+                    ...updated.staffAssignment,
+                    waiterId: updated.staffAssignment?.waiterId || waiterId,
+                    waiterName: updated.staffAssignment?.waiterName || waiterName,
+                  },
+                }
+              : o
+          ),
+        }));
+      }
     } catch (err) {
       console.warn(`Failed to sync waiter assignment on server for order ${orderId}:`, err);
     }
