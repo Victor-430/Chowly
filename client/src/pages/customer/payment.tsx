@@ -16,20 +16,44 @@ export default function Payment() {
   const { getOrder, fetchOrder, updateStatus } = useOrderStore();
   const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const order = orderId ? getOrder(orderId) : undefined;
 
   useEffect(() => {
     if (orderId && !order) {
       fetchOrder(orderId);
+    if (orderId) {
+      if (!order) setIsLoading(true);
+      fetchOrder(orderId).finally(() => {
+        setIsLoading(false);
+      });
     }
   }, [orderId, order, fetchOrder]);
+  }, [orderId, fetchOrder]);
+
+  if (isLoading && !order) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center text-text-secondary">
+        <p>Loading order details...</p>
+      </div>
+    );
+  }
 
   if (!order) {
     return <div className="p-8 text-center">Order Not Found</div>;
+    return <div className="p-8 text-center text-text-secondary">Order Not Found</div>;
   }
 
+  const isPaid = isSuccess || order.status === 'paid' || (order as any).paymentStatus === 'success';
+
   const handlePayment = async () => {
+    if (order.status === 'paid' || (order as any).paymentStatus === 'success') {
+      toast.info('This order has already been paid.');
+      setIsSuccess(true);
+      return;
+    }
+
     setIsProcessing(true);
     try {
       await feedbackApi.createPayment(order.id, 'CARD');
@@ -41,12 +65,25 @@ export default function Payment() {
       await updateStatus(order.id, 'paid');
       toast.success('Payment processed successfully');
       setIsSuccess(true);
+      const errorMsg = err?.response?.data?.message || err?.message || '';
+      if (
+        errorMsg.toLowerCase().includes('already been paid') ||
+        errorMsg.toLowerCase().includes('already paid')
+      ) {
+        toast.info('This order has already been paid.');
+        await updateStatus(order.id, 'paid');
+        setIsSuccess(true);
+      } else {
+        console.error('Payment processing failed:', err);
+        toast.error(errorMsg || 'Payment failed. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }
   };
 
   if (isSuccess) {
+  if (isPaid) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <motion.div 
@@ -66,6 +103,23 @@ export default function Payment() {
         >
           Rate Your Experience
         </Button>
+        <div className="space-y-3">
+          <Button 
+            className="w-full bg-amber hover:bg-amber/90 text-white" 
+            size="lg"
+            onClick={() => navigate(`/customer/feedback/${order.id}`)}
+          >
+            Rate Your Experience
+          </Button>
+          <Button
+            variant="secondary"
+            className="w-full"
+            size="lg"
+            onClick={() => navigate(`/customer/orders/${order.id}`)}
+          >
+            View Order Details
+          </Button>
+        </div>
       </div>
     );
   }
