@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { sampleOrders } from '@/data/mock-data';
-import type { Order, OrderStatus, CartItem } from '@/types';
+import type { Order, OrderStatus, CartItem, Complaint, ComplaintType } from '@/types';
 import { generateOrderId } from '@/lib/utils';
-import { orderApi } from '@/services/order.api';
+import { orderApi, type CreateOrderPayload } from '@/services/order.api';
 import { feedbackApi } from '@/services/feedback.api';
 
 interface OrderState {
@@ -31,6 +31,7 @@ interface OrderState {
   updateOrderItem: (orderId: string, menuItemId: string, quantity: number) => void;
   removeOrderItem: (orderId: string, menuItemId: string) => void;
   addRating: (orderId: string, rating: number, comment?: string, customerId?: string) => Promise<void>;
+  addComplaint: (orderId: string, type: ComplaintType, description: string, customerId?: string) => Promise<void>;
 }
 
 const PACKAGING_FEE = 200;
@@ -44,27 +45,26 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   placeOrder: async ({ items, tableNumber, tableId, restaurantId, customerId = DEFAULT_CUSTOMER_ID }) => {
     set({ isLoading: true, error: null });
 
-    // Try backend API creation first
+    // Always attempt backend API creation first
     try {
-      if (tableId) {
-        const payload = {
-          customerId,
-          restaurantId,
-          tableId,
-          items: items.map((i) => ({
-            menuItemId: i.menuItem.id,
-            quantity: i.quantity,
-            specialInstructions: i.specialInstructions,
-          })),
-        };
+      const payload: CreateOrderPayload = {
+        customerId,
+        restaurantId,
+        tableId: tableId || undefined,
+        tableNumber,
+        items: items.map((i) => ({
+          menuItemId: i.menuItem.id,
+          quantity: i.quantity,
+          specialInstructions: i.specialInstructions,
+        })),
+      };
 
-        const liveOrder = await orderApi.create(payload);
-        set((state) => ({
-          orders: [liveOrder, ...state.orders.filter((o) => o.id !== liveOrder.id)],
-          isLoading: false,
-        }));
-        return liveOrder;
-      }
+      const liveOrder = await orderApi.create(payload);
+      set((state) => ({
+        orders: [liveOrder, ...state.orders.filter((o) => o.id !== liveOrder.id)],
+        isLoading: false,
+      }));
+      return liveOrder;
     } catch (err: any) {
       console.warn('API order placement failed or offline, falling back to local order:', err);
     }
@@ -111,6 +111,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           const merged: Order = existing
             ? {
                 ...incoming,
+                rating: incoming.rating || existing.rating,
+                complaints: (incoming.complaints && incoming.complaints.length > 0)
+                  ? incoming.complaints
+                  : existing.complaints,
                 staffAssignment: {
                   waiterId: incoming.staffAssignment?.waiterId || existing.staffAssignment?.waiterId,
                   waiterName: incoming.staffAssignment?.waiterName || existing.staffAssignment?.waiterName,
@@ -149,6 +153,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             serverMap.delete(existing.id);
             return {
               ...incoming,
+              rating: incoming.rating || existing.rating,
+              complaints: (incoming.complaints && incoming.complaints.length > 0)
+                ? incoming.complaints
+                : existing.complaints,
               staffAssignment: {
                 waiterId: incoming.staffAssignment?.waiterId || existing.staffAssignment?.waiterId,
                 waiterName: incoming.staffAssignment?.waiterName || existing.staffAssignment?.waiterName,
@@ -345,13 +353,87 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     // Persist to backend API
     try {
-      await feedbackApi.createRating(orderId, {
+      const saved = await feedbackApi.createRating(orderId, {
         customerId,
         rating,
         comment: comment?.trim() || undefined,
       });
+      if (saved) {
+        set((state) => ({
+          orders: state.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  rating: {
+                    id: saved.id,
+                    orderId: saved.orderId,
+                    rating: saved.rating,
+                    comment: saved.comment,
+                    createdAt: saved.createdAt,
+                  },
+                  updatedAt: new Date().toISOString(),
+                }
+              : o
+          ),
+        }));
+      }
     } catch (err: any) {
       console.warn(`Failed to submit rating to backend for order ${orderId}:`, err);
+    }
+  },
+
+  addComplaint: async (orderId, type, description, customerId = DEFAULT_CUSTOMER_ID) => {
+    const tempComplaint: Complaint = {
+      orderId,
+      type,
+      description: description.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Optimistically update order complaints locally
+    set((state) => ({
+      orders: state.orders.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              complaints: [...(o.complaints || []), tempComplaint],
+              updatedAt: new Date().toISOString(),
+            }
+          : o
+      ),
+    }));
+
+    // Persist to backend API
+    try {
+      const saved = await feedbackApi.createComplaint(orderId, {
+        customerId,
+        type,
+        description: description.trim(),
+      });
+      if (saved) {
+        set((state) => ({
+          orders: state.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  complaints: [
+                    ...(o.complaints || []).filter((c) => c !== tempComplaint),
+                    {
+                      id: saved.id,
+                      orderId: saved.orderId,
+                      type: saved.type,
+                      description: saved.description,
+                      createdAt: new Date().toISOString(),
+                    },
+                  ],
+                  updatedAt: new Date().toISOString(),
+                }
+              : o
+          ),
+        }));
+      }
+    } catch (err: any) {
+      console.warn(`Failed to submit complaint to backend for order ${orderId}:`, err);
     }
   },
 }));

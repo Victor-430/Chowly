@@ -5,7 +5,8 @@ import { conflict, invalid, notFound } from "../utils/errors.js";
 type CreateOrderInput = {
   customerId: string;
   restaurantId: string;
-  tableId: string;
+  tableId?: string;
+  tableNumber?: number;
   items: Array<{
     menuItemId: string;
     quantity: number;
@@ -43,7 +44,7 @@ export const presentOrder = (order: any) => ({
   customerId: order.customerId,
   restaurantId: order.restaurantId,
   tableId: order.tableId,
-  tableNumber: order.table.tableNumber,
+  tableNumber: order.table?.tableNumber,
   status: order.status.toLowerCase(),
   subtotal: toNumber(order.subtotal),
   packagingFee: toNumber(order.packagingMaterialCost),
@@ -54,7 +55,7 @@ export const presentOrder = (order: any) => ({
   updatedAt: order.updatedAt,
   items: order.items.map((item: any) => ({
     menuItemId: item.menuItemId,
-    name: item.menuItem.name,
+    name: item.menuItem?.name || item.name,
     price: toNumber(item.unitPrice),
     quantity: item.quantity,
     specialInstructions: item.specialInstructions,
@@ -62,18 +63,27 @@ export const presentOrder = (order: any) => ({
   staffAssignment: {
     waiterId: order.waiter?.id,
     waiterName: order.waiter?.fullName,
-    chefId: order.assignments.find((a: any) => a.role === "CHEF")?.staff.id,
-    chefName: order.assignments.find((a: any) => a.role === "CHEF")?.staff
-      .fullName,
-    bartenderId: order.assignments.find((a: any) => a.role === "BARTENDER")
-      ?.staff.id,
-    bartenderName: order.assignments.find((a: any) => a.role === "BARTENDER")
-      ?.staff.fullName,
+    chefId: order.assignments?.find((a: any) => a.role === "CHEF")?.staff?.id,
+    chefName: order.assignments?.find((a: any) => a.role === "CHEF")?.staff?.fullName,
+    bartenderId: order.assignments?.find((a: any) => a.role === "BARTENDER")?.staff?.id,
+    bartenderName: order.assignments?.find((a: any) => a.role === "BARTENDER")?.staff?.fullName,
   },
   tracking: order.tracking,
   payments: order.payments,
-  rating: order.rating,
-  complaints: order.complaints,
+  rating: order.rating ? {
+    id: order.rating.id,
+    orderId: order.rating.orderId,
+    rating: order.rating.rating,
+    comment: order.rating.comment,
+    createdAt: order.rating.createdAt,
+  } : undefined,
+  complaints: order.complaints ? order.complaints.map((c: any) => ({
+    id: c.id,
+    orderId: c.orderId,
+    type: c.type.toLowerCase(),
+    description: c.description,
+    createdAt: c.createdAt,
+  })) : [],
 });
 
 export async function createOrder(input: CreateOrderInput) {
@@ -82,23 +92,53 @@ export async function createOrder(input: CreateOrderInput) {
     throw invalid("Each menu item may appear only once");
   return prisma.$transaction(
     async (tx) => {
-      const [restaurant, customer, table, menuItems] = await Promise.all([
-        tx.restaurant.findUnique({ where: { id: input.restaurantId } }),
-        tx.customer.findUnique({ where: { id: input.customerId } }),
-        tx.restaurantTable.findUnique({ where: { id: input.tableId } }),
-        tx.menuItem.findMany({
-          where: {
-            id: { in: ids },
-            restaurantId: input.restaurantId,
-            availabilityStatus: true,
-          },
-        }),
-      ]);
+      const restaurant = await tx.restaurant.findUnique({ where: { id: input.restaurantId } });
       if (!restaurant) throw notFound("Restaurant");
       if (restaurant.status !== "OPEN") throw conflict("Restaurant is closed");
-      if (!customer) throw notFound("Customer");
-      if (!table || table.restaurantId !== input.restaurantId)
+
+      let customer = await tx.customer.findUnique({ where: { id: input.customerId } });
+      if (!customer) {
+        customer = await tx.customer.create({
+          data: {
+            id: input.customerId,
+            displayName: "Dine-in Customer",
+          },
+        });
+      }
+
+      let table: any = null;
+      if (input.tableId) {
+        table = await tx.restaurantTable.findUnique({ where: { id: input.tableId } });
+      }
+      if (!table && input.tableNumber !== undefined) {
+        table = await tx.restaurantTable.findFirst({
+          where: {
+            restaurantId: input.restaurantId,
+            tableNumber: input.tableNumber,
+          },
+        });
+      }
+      if (!table && input.tableNumber !== undefined) {
+        table = await tx.restaurantTable.create({
+          data: {
+            restaurantId: input.restaurantId,
+            tableNumber: input.tableNumber,
+            capacity: 4,
+            status: "OCCUPIED",
+          },
+        });
+      }
+      if (!table || table.restaurantId !== input.restaurantId) {
         throw invalid("Table does not belong to this restaurant");
+      }
+
+      const menuItems = await tx.menuItem.findMany({
+        where: {
+          id: { in: ids },
+          restaurantId: input.restaurantId,
+          availabilityStatus: true,
+        },
+      });
       if (menuItems.length !== ids.length)
         throw invalid(
           "One or more menu items are missing, unavailable, or belong to another restaurant",
@@ -121,9 +161,9 @@ export async function createOrder(input: CreateOrderInput) {
       const packaging = new Prisma.Decimal(0);
       const order = await tx.order.create({
         data: {
-          customerId: input.customerId,
+          customerId: customer.id,
           restaurantId: input.restaurantId,
-          tableId: input.tableId,
+          tableId: table.id,
           subtotal,
           packagingMaterialCost: packaging,
           totalAmount: subtotal.add(packaging),

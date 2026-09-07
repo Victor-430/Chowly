@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useOrderStore } from '@/stores/order-store';
 import { motion } from 'framer-motion';
-import { HiCheck, HiArrowLeft } from 'react-icons/hi2';
+import { HiCheck, HiArrowLeft, HiStar, HiExclamationCircle } from 'react-icons/hi2';
 import { OrderTimeline } from '@/components/customer/order-timeline';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,8 @@ export default function OrderConfirmation() {
 
   const isServed = order.status === 'served' || order.status === 'awaiting_payment';
   const isPaid = order.status === 'paid';
+  const hasRating = Boolean(order.rating);
+  const hasComplaints = Boolean(order.complaints && order.complaints.length > 0);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-warm-white min-h-screen">
@@ -106,15 +108,98 @@ export default function OrderConfirmation() {
             </CardContent>
           </Card>
 
+          {(hasRating || hasComplaints) && (
+            <Card className="border-border shadow-sm bg-surface">
+              <CardContent className="p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg text-charcoal">Your Feedback</h3>
+                  {hasRating && (
+                    <div className="flex items-center gap-1 bg-amber/10 text-amber px-2.5 py-1 rounded-full text-sm font-semibold">
+                      <HiStar className="w-4 h-4 fill-amber" />
+                      <span>{order.rating?.rating} / 5</span>
+                    </div>
+                  )}
+                </div>
+
+                {hasRating && (
+                  <div className="flex gap-1 py-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <HiStar
+                        key={star}
+                        className={`w-5 h-5 ${
+                          (order.rating?.rating || 0) >= star ? 'text-amber fill-amber' : 'text-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {order.rating?.comment && (
+                  <p className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-lg p-3 italic">
+                    "{order.rating.comment}"
+                  </p>
+                )}
+
+                {hasComplaints && (
+                  <div className="pt-2 border-t border-border/50">
+                    <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                      Issues Reported
+                    </p>
+                    <div className="space-y-2">
+                      {order.complaints?.map((comp, idx) => (
+                        <div
+                          key={comp.id || idx}
+                          className="flex items-start gap-2 text-xs bg-red-50 text-red-700 border border-red-200/60 rounded-md p-2"
+                        >
+                          <HiExclamationCircle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
+                          <div>
+                            <span className="font-semibold capitalize">
+                              {typeof comp.type === 'string' ? comp.type.replace(/_/g, ' ') : comp.type}
+                            </span>
+                            {comp.description && comp.description !== comp.type && (
+                              <p className="text-red-600 mt-0.5">{comp.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <div className="space-y-3">
             {isPaid ? (
-              <Button 
-                className="w-full bg-amber hover:bg-amber/90 text-white" 
-                size="lg"
-                onClick={() => navigate(`/customer/feedback/${order.id}`)}
-              >
-                Rate Experience
-              </Button>
+              hasRating ? (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    className="w-full"
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => navigate('/customer/orders')}
+                  >
+                    View All Orders
+                  </Button>
+                  <Button
+                    className="w-full"
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => navigate('/customer/menu')}
+                  >
+                    <HiArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Menu
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  className="w-full bg-amber hover:bg-amber/90 text-white" 
+                  size="lg"
+                  onClick={() => navigate(`/customer/feedback/${order.id}`)}
+                >
+                  Rate Experience
+                </Button>
+              )
             ) : isServed ? (
               <Button 
                 className="w-full bg-green-600 hover:bg-green-700 text-white" 

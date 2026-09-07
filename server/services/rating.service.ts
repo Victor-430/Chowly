@@ -1,19 +1,28 @@
 import { prisma } from '../lib/prisma.js';
 import { conflict, invalid, notFound } from '../utils/errors.js';
 
-export async function createRating(orderId: string, customerId: string, rating: number, comment?: string) {
+export async function createRating(orderId: string, customerId?: string, rating?: number, comment?: string) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw notFound('Order');
-  if (order.customerId !== customerId) throw invalid('You can only rate your own orders');
-  if (!['SERVED', 'AWAITING_PAYMENT', 'PAID'].includes(order.status)) {
-    throw conflict('Order must be served or paid before rating');
+  if (rating === undefined || rating < 1 || rating > 5) {
+    throw invalid('rating must be between 1 and 5');
   }
 
+  const effectiveCustomerId = order.customerId;
   const existing = await prisma.rating.findUnique({ where: { orderId } });
-  if (existing) throw conflict('This order has already been rated');
+  if (existing) {
+    const updated = await prisma.rating.update({
+      where: { orderId },
+      data: { rating, comment: comment?.trim() || null },
+    });
+    return {
+      id: updated.id, orderId: updated.orderId, rating: updated.rating,
+      comment: updated.comment, createdAt: updated.createdAt,
+    };
+  }
 
   const created = await prisma.rating.create({
-    data: { orderId, customerId, rating, comment: comment?.trim() || null },
+    data: { orderId, customerId: effectiveCustomerId, rating, comment: comment?.trim() || null },
   });
   return {
     id: created.id, orderId: created.orderId, rating: created.rating,

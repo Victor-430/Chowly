@@ -4,7 +4,8 @@ import type { Order, OrderStatus } from '@/types';
 export interface CreateOrderPayload {
   customerId: string;
   restaurantId: string;
-  tableId: string;
+  tableId?: string;
+  tableNumber?: number;
   items: Array<{
     menuItemId: string;
     quantity: number;

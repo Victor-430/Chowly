@@ -8,7 +8,21 @@ export async function createPayment(orderId: string, paymentType: PaymentType) {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({ where: { id: orderId } });
     if (!order) throw notFound('Order');
-    if (order.status !== 'AWAITING_PAYMENT' && order.status !== 'SERVED') throw conflict('Order must be served or awaiting payment');
+    if (order.status === 'CANCELLED') throw conflict('Cannot pay for a cancelled order');
+    if (order.status === 'PAID') {
+      const existing = await tx.payment.findFirst({ where: { orderId } });
+      if (existing) {
+        return {
+          id: existing.id,
+          orderId: existing.orderId,
+          amount: toNumber(existing.amount),
+          status: existing.status.toLowerCase(),
+          paymentType: existing.paymentType.toLowerCase(),
+          paidAt: existing.paidAt,
+          createdAt: existing.createdAt,
+        };
+      }
+    }
 
     const now = new Date();
     const payment = await tx.payment.create({
@@ -33,10 +47,13 @@ export async function createPayment(orderId: string, paymentType: PaymentType) {
     });
 
     return {
-      id: payment.id, orderId: payment.orderId,
-      amount: toNumber(payment.amount), status: payment.status.toLowerCase(),
+      id: payment.id,
+      orderId: payment.orderId,
+      amount: toNumber(payment.amount),
+      status: payment.status.toLowerCase(),
       paymentType: payment.paymentType.toLowerCase(),
-      paidAt: payment.paidAt, createdAt: payment.createdAt,
+      paidAt: payment.paidAt,
+      createdAt: payment.createdAt,
     };
   });
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { HiArrowLeft, HiExclamationTriangle } from 'react-icons/hi2';
+import { HiArrowLeft, HiExclamationTriangle, HiStar } from 'react-icons/hi2';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -197,6 +197,67 @@ export default function WaiterOrderDetail() {
               <span>{formatCurrency(order.total)}</span>
             </div>
           </div>
+
+          {(Boolean(order.rating) || Boolean(order.complaints && order.complaints.length > 0)) && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-charcoal">Customer Feedback</h3>
+                  {order.rating && (
+                    <div className="flex items-center gap-1.5 bg-amber/10 text-amber px-3 py-1 rounded-full text-sm font-semibold">
+                      <HiStar className="w-4 h-4 fill-amber" />
+                      <span>{order.rating.rating} / 5</span>
+                    </div>
+                  )}
+                </div>
+
+                {order.rating && (
+                  <div className="space-y-2">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <HiStar
+                          key={star}
+                          className={`w-4 h-4 ${
+                            (order.rating?.rating || 0) >= star ? 'text-amber fill-amber' : 'text-gray-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    {order.rating.comment && (
+                      <p className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-lg p-3 italic">
+                        "{order.rating.comment}"
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {order.complaints && order.complaints.length > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Reported Issues
+                    </p>
+                    {order.complaints.map((comp, idx) => (
+                      <div
+                        key={comp.id || idx}
+                        className="flex items-start gap-2 text-sm bg-red-50 text-red-700 border border-red-200/60 rounded-lg p-3"
+                      >
+                        <HiExclamationTriangle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
+                        <div>
+                          <p className="font-semibold capitalize">
+                            {typeof comp.type === 'string' ? comp.type.replace(/_/g, ' ') : comp.type}
+                          </p>
+                          {comp.description && comp.description !== comp.type && (
+                            <p className="text-xs text-red-600 mt-0.5">{comp.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           <Separator />
 

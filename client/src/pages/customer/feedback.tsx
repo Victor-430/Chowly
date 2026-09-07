@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useOrderStore } from '@/stores/order-store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { feedbackApi } from '@/services/feedback.api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { HiStar, HiCheck } from 'react-icons/hi2';
@@ -27,7 +26,7 @@ const TYPE_MAP: Record<string, ComplaintType> = {
 export default function Feedback() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { getOrder, fetchOrder, addRating } = useOrderStore();
+  const { getOrder, fetchOrder, addRating, addComplaint } = useOrderStore();
   
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -43,6 +42,13 @@ export default function Feedback() {
       fetchOrder(orderId);
     }
   }, [orderId, order, fetchOrder]);
+
+  useEffect(() => {
+    if (order?.rating) {
+      setRating(order.rating.rating);
+      if (order.rating.comment) setComment(order.rating.comment);
+    }
+  }, [order?.rating]);
 
   if (!order) {
     return <div className="p-8 text-center">Order Not Found</div>;
@@ -63,24 +69,25 @@ export default function Feedback() {
     setIsSubmitting(true);
     try {
       // 1. Submit rating via order store (updates local state + persists to backend)
-      await addRating(order.id, rating, comment.trim() || undefined);
+      await addRating(order.id, rating, comment.trim() || undefined, order.customerId);
 
-      // 2. If complaints selected, submit them
+      // 2. If complaints selected, submit them via order store
       if (selectedComplaints.length > 0) {
         for (const comp of selectedComplaints) {
-          await feedbackApi.createComplaint(order.id, {
-            customerId: 'cust-001',
-            type: TYPE_MAP[comp] || 'other',
-            description: comment.trim() || comp,
-          }).catch((err) => console.warn('Complaint API notice:', err));
+          await addComplaint(
+            order.id,
+            TYPE_MAP[comp] || 'other',
+            comment.trim() || comp,
+            order.customerId
+          );
         }
       }
 
       toast.success('Thank you for your feedback!');
       setSubmitted(true);
       setTimeout(() => {
-        navigate('/customer/orders');
-      }, 2000);
+        navigate(`/customer/orders/${order.id}`);
+      }, 1500);
     } catch (err: any) {
       toast.error(err.message || 'Failed to submit feedback');
     } finally {

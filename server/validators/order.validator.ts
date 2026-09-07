@@ -7,6 +7,15 @@ export const validateCreateOrder = (body: unknown) => {
   requireString(value.customerId, 'customerId', 100);
   requireString(value.restaurantId, 'restaurantId', 100);
   requireString(value.tableId, 'tableId', 100);
+  if (!value.tableId && value.tableNumber === undefined) {
+    throw invalid('Either tableId or tableNumber is required');
+  }
+  if (value.tableId !== undefined) {
+    requireString(value.tableId, 'tableId', 100);
+  }
+  if (value.tableNumber !== undefined) {
+    requirePositiveInteger(value.tableNumber, 'tableNumber', 1000);
+  }
   if (!Array.isArray(value.items) || value.items.length === 0 || value.items.length > 30) throw invalid('items must contain between 1 and 30 items');
   for (const item of value.items) {
     if (!item || typeof item !== 'object') throw invalid('Each item must be an object');

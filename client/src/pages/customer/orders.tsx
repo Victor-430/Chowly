@@ -6,7 +6,7 @@ import { OrderStatusBadge } from '@/components/shared/order-status-badge';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { HiOutlineClock } from 'react-icons/hi2';
+import { HiOutlineClock, HiStar } from 'react-icons/hi2';
 
 export default function Orders() {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ export default function Orders() {
 
   useEffect(() => {
     fetchOrders({ customerId: 'cust-001' });
+    fetchOrders();
   }, [fetchOrders]);
   
   const orders = getCustomerOrders(tableNumber || undefined);
@@ -51,9 +52,19 @@ export default function Orders() {
           >
             <CardContent className="p-5 flex flex-col sm:flex-row justify-between sm:items-center">
               <div>
-                <div className="flex items-center space-x-3 mb-2">
-                  {/* <span className="font-semibold text-lg">Order #{order.id}</span> */}
+                <div className="flex items-center space-x-2.5 mb-2 flex-wrap gap-y-1">
                   <OrderStatusBadge status={order.status} />
+                  {order.rating && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber bg-amber/10 border border-amber/20 px-2.5 py-0.5 rounded-full">
+                      <HiStar className="w-3.5 h-3.5 fill-amber" />
+                      <span>{order.rating.rating}/5</span>
+                    </span>
+                  )}
+                  {order.complaints && order.complaints.length > 0 && (
+                    <span className="inline-flex items-center text-xs text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full font-medium">
+                      Feedback filed
+                    </span>
+                  )}
                 </div>
                 <div className="text-sm text-text-secondary">
                   {formatDate(order.createdAt)} • {order.items.reduce((acc, item) => acc + item.quantity, 0)} items

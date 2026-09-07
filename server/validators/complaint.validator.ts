@@ -12,6 +12,9 @@ export const validateComplaint = (body: unknown) => {
   if (!body || typeof body !== 'object') throw invalid('Request body is required');
   const value = body as Record<string, unknown>;
   requireString(value.customerId, 'customerId', 100);
+  if (value.customerId !== undefined) {
+    requireString(value.customerId, 'customerId', 100);
+  }
   requireString(value.description, 'description', 2000);
 
   const rawType = requireString(value.type, 'type', 50).toUpperCase();

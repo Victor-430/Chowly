@@ -71,7 +71,9 @@ export interface StaffAssignment {
 
 export interface Order {
   id: string;
+  customerId?: string;
   restaurantId: string;
+  tableId?: string;
   tableNumber: number;
   items: OrderItem[];
   status: OrderStatus;
@@ -83,6 +85,7 @@ export interface Order {
   createdAt: string; // ISO string
   updatedAt: string;
   rating?: Rating;
+  complaints?: Complaint[];
 }
 
 // ─── Staff ──────────────────────────────────────────────
@@ -103,15 +106,20 @@ export type ComplaintType =
   | 'other';
 
 export interface Rating {
+  id?: string;
   orderId: string;
   rating: number; // 1-5
   comment?: string;
+  createdAt?: string;
 }
 
 export interface Complaint {
+  id?: string;
   orderId: string;
-  types: ComplaintType[];
+  types?: ComplaintType[];
+  type: ComplaintType | string;
   description: string;
+  createdAt?: string;
 }
 
 // ─── Payment ────────────────────────────────────────────
