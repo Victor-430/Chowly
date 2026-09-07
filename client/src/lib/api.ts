@@ -16,6 +16,9 @@ export class ApiError extends Error {
   }
 }
 
+// const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// console.log('API Base URL:', BASE_URL);
+
 export function getApiBaseUrl(): string {
   const envUrl = import.meta.env.VITE_API_URL?.trim();
 
@@ -47,9 +50,9 @@ export function getApiBaseUrl(): string {
 }
 
 export const BASE_URL = getApiBaseUrl();
-if (import.meta.env.DEV) {
-  console.log(`[API] Base URL (${import.meta.env.MODE}):`, BASE_URL);
-}
+// if (import.meta.env.DEV) {
+//   console.log(`[API] Base URL (${import.meta.env.MODE}):`, BASE_URL);
+// }
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
