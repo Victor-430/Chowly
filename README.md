@@ -10,7 +10,7 @@
 [![Swagger](https://img.shields.io/badge/Swagger-OpenAPI_3.0-85EA2D.svg?style=flat-square&logo=swagger)](http://localhost:5000/api/docs)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 
-**Chowly** is a full-stack, mobile-first and desktop-optimized digital dining platform designed for modern restaurants. It replaces outdated paper menus and slow service bottlenecks with QR-powered table ordering, real-time preparation tracking, multi-station staff dispatch (waiters, chefs, bartenders), frictionless digital bill settlement, and customer feedback loops.
+**Chowly** is a full-stack, mobile-first and desktop-optimized digital dining platform designed for modern restaurants. It replaces outdated paper menus and slow service bottlenecks with QR-powered table ordering, real-time preparation tracking, multi-station staff dispatch (waiters, chefs, bartenders), frictionless digital bill settlement, customer feedback loops, and persistent PostgreSQL database storage.
 
 ---
 
@@ -19,6 +19,7 @@
 - [Key Features](#-key-features)
   - [Customer Experience](#-customer-experience)
   - [Waiter & Staff Operations](#-waiter--staff-operations)
+  - [Database & State Resilience](#-database--state-resilience)
 - [System Architecture](#-system-architecture)
 - [Tech Stack](#-tech-stack)
 - [Repository Structure](#-repository-structure)
@@ -32,8 +33,8 @@
   - [4. Running the Development Servers](#4-running-the-development-servers)
 - [Offline / Standalone Demo Mode](#-offline--standalone-demo-mode)
 - [Production Deployment](#-production-deployment)
-  - [Client Deployment (Vercel / Netlify)](#client-deployment-vercel--netlify)
-  - [Server Deployment (Render / Railway / VPS)](#server-deployment-render--railway--vps)
+  - [Backend Deployment (Railway)](#backend-deployment-railway)
+  - [Frontend Deployment (Vercel / Netlify)](#frontend-deployment-vercel--netlify)
 - [Troubleshooting & Windows Development Tips](#-troubleshooting--windows-development-tips)
 - [Contributing & License](#-contributing--license)
 
@@ -43,10 +44,11 @@
 
 ### 👤 Customer Experience
 
-- **Seamless QR Code / Table Selection:** Customers scan a table QR code (e.g. `/restaurant/the-grill-house/table/3`) or select their table from an intuitive visual grid with live capacity indicators.
+- **Seamless QR Code / Table Selection:** Customers scan a table QR code (e.g. `/restaurant/the-grill-house/table/3`) or select their table from an intuitive visual grid with live capacity indicators. Table selection persists across browser reloads.
 - **Categorized Digital Menu:** Fast item filtering across Food, Drinks, and Desserts with real-time text search, preparation time badges, price tags, and high-resolution photography.
 - **Customized Item Ordering:** Add special instructions (e.g. *"Extra spicy"*, *"No onions"*), adjust quantities, and review live price calculations.
-- **Responsive Cart:** Responsive slide-over / 2-column widescreen cart with line-item notes, packaging fees, subtotal calculation, and instant order placement.
+- **Persistent Cart:** Cart items and customizations are safely stored in `localStorage`, surviving accidental browser refreshes.
+- **Device-Isolated Customer History:** Each visiting device receives an isolated, persistent customer ID (`cust_<uuid>`), ensuring order history remains strictly private to the current customer session.
 - **Live Order Timeline:** Real-time visual progress tracker across 6 distinct lifecycle steps:
   1. *Order Received*
   2. *Waiter Assigned*
@@ -54,9 +56,11 @@
   4. *Preparing*
   5. *Ready for Serving*
   6. *Served*
-- **Contactless Bill Payment:** On-screen bill breakdown with instant payment simulation (Card, Bank Transfer, Cash).
-- **Post-Dining Feedback:** 5-star rating system with contextual complaint capture (*"Food took too long"*, *"Incorrect order"*, *"Poor service"*, etc.) when ratings indicate a sub-optimal experience.
-- **Order History:** Persistent access to past orders placed at the table.
+- **Contactless Bill Settlement & Idempotency:**
+  - On-screen bill breakdown with instant payment simulation (Card, Bank Transfer, Cash).
+  - **Duplicate Payment Prevention:** Backend rejects duplicate payment attempts on already-paid orders with `409 Conflict`.
+  - **Persistent Success State:** Refreshing `/customer/payment/:orderId` preserves the **"Payment Successful!"** screen and prompts for ratings rather than re-showing the bill.
+- **Post-Dining Feedback Loop:** 5-star rating system with optional remarks and contextual complaint capture (*"Food took too long"*, *"Incorrect order"*, *"Poor service"*, etc.), stored directly in the database and displayed on the Order Confirmation page.
 
 ### 🧑‍🍳 Waiter & Staff Operations
 
@@ -69,6 +73,12 @@
 - **Status Lifecycle Progression:** Single-click order status advancement (`new` → `assigned` → `preparing` → `ready` → `served`).
 - **Responsive & Mobile-Protected Viewports:** Fully responsive layout with hardened `min-w-0` overflow protection to eliminate awkward horizontal scrolling on phone screens.
 - **Role Switcher:** Instant role-switching toggle between Customer and Waiter modes for testing, staff training, and demos.
+
+### 🛡️ Database & State Resilience
+
+- **Full PostgreSQL & Prisma Persistence:** All orders, items, tracking timestamps, payments, ratings, and complaints persist in PostgreSQL.
+- **Dual-Layer Fallback:** If the database or server is offline, the client falls back to local storage and mock data without crashing the UI.
+- **Dynamic API Base URL & CORS Resolution:** Seamless switching between local development (`localhost:5000`), preview deployments, and production environments (Railway + Vercel).
 
 ---
 
@@ -238,9 +248,9 @@ Chowly features an interactive Swagger UI documentation dashboard. When the back
 - `PATCH /api/orders/:id/waiter` — Assign a primary waiter to an order.
 
 #### 💳 Payments & Feedback
-- `POST /api/orders/:orderId/payments` — Record payment transaction (Card, Bank Transfer, Cash).
-- `POST /api/orders/:orderId/rating` — Submit 1-5 star customer review with optional remarks.
-- `POST /api/orders/:orderId/complaints` — File a service or food quality complaint.
+- `POST /api/orders/:orderId/payments` — Record payment transaction (Card, Bank Transfer, Cash). Strictly rejects already-paid orders with `409 Conflict`.
+- `POST /api/orders/:orderId/rating` — Persist 1-5 star customer review with optional remarks to PostgreSQL.
+- `POST /api/orders/:orderId/complaints` — File a service or food quality complaint stored directly in the database.
 
 ---
 
@@ -250,7 +260,7 @@ Chowly features an interactive Swagger UI documentation dashboard. When the back
 
 - **Node.js**: v18.0.0 or later (Node 20+ recommended)
 - **npm**: v9.0.0 or later (or yarn / pnpm)
-- **PostgreSQL Database**: Local PostgreSQL instance OR a free cloud database like [Neon](https://neon.tech/)
+- **PostgreSQL Database**: Local PostgreSQL instance or cloud database (e.g. [Railway](https://railway.app/) or [Neon](https://neon.tech/))
 
 ---
 
@@ -285,15 +295,20 @@ cd ..
 Create a `.env` file in the `server/` directory:
 
 ```env
-# Database Connection (Neon or local PostgreSQL)
-DATABASE_URL="postgresql://username:password@ep-sample-pool.us-east-2.aws.neon.tech/chowly?sslmode=require"
+# Database Connection (Neon, Railway, or local PostgreSQL)
+DATABASE_URL="postgresql://postgres:password@localhost:5432/chowly?schema=public"
 
 # Server Port
 PORT=5000
 
-# Allowed Frontend Origins (CORS)
-FRONTEND_URL="http://localhost:5173"
+# Node Environment
+NODE_ENV=development
+
+# Allowed Frontend Origins (comma-separated for multiple origins)
+FRONTEND_URL="http://localhost:5173,https://chowly-restaurant.vercel.app"
 ```
+
+> **Dynamic CORS:** The server automatically supports local dev hosts (`localhost:5173`, `127.0.0.1:5173`), production domains specified in `FRONTEND_URL`, and any preview deployments under `https://*.vercel.app`.
 
 #### Frontend Environment (`client/.env`)
 Create a `.env` file in the `client/` directory:
@@ -302,6 +317,8 @@ Create a `.env` file in the `client/` directory:
 # Backend API Base URL
 VITE_API_URL="http://localhost:5000/api"
 ```
+
+> **Note:** If `VITE_API_URL` is omitted, the client automatically defaults to `http://localhost:5000/api` during local development, and `https://chowly.up.railway.app/api` in production.
 
 ---
 
@@ -318,13 +335,11 @@ npm run prisma:generate
 # Push schema changes or run migrations
 npm run prisma:migrate
 
-# Seed restaurant, tables (1-15), menu items, and staff members
+# Seed restaurant ("The Grill House"), 15 tables, categorized meals/drinks/desserts, and staff
 npm run seed
 
 cd ..
 ```
-
-> **Note:** The seeder creates *"The Grill House"* restaurant, 15 tables, categorized meals/drinks/desserts, and sample staff (waiters, chefs, bartenders).
 
 ---
 
@@ -365,48 +380,51 @@ npm run dev:server
 Chowly is engineered with zero-friction development in mind. If you run the frontend without starting the backend or without configuring a PostgreSQL database:
 - The frontend client detects network unavailability and **automatically falls back to rich mock data**.
 - You can freely browse menus, select tables, place orders, advance through the live timeline, simulate payments, and test waiter assignments.
-- All state changes persist smoothly in-memory within the Zustand stores for the duration of your session.
+- All state changes persist smoothly in-memory and in `localStorage` within Zustand stores for the duration of your session.
 
 ---
 
 ## 🌐 Production Deployment
 
-### Client Deployment (Vercel / Netlify)
+### Backend Deployment (Railway)
 
-The client is configured for Single Page Application (SPA) routing:
-
-#### Deploying on Vercel:
-1. Connect your GitHub repository to Vercel.
-2. Set the **Root Directory** to `client` (or use the root `vercel.json` rewrite configuration).
-3. Set **Build Command** to `npm run build` and **Output Directory** to `dist`.
-4. Set the environment variable:
-   - `VITE_API_URL`: Your deployed backend API URL (e.g. `https://chowly-api.onrender.com/api`).
-5. Vercel automatically honors `vercel.json` rewrites to redirect all subroutes (`/customer`, `/waiter`, `/restaurant/:id`) to `index.html`.
-
-#### Deploying on Netlify:
-The `client/public/_redirects` file is pre-configured:
-```text
-/*    /index.html   200
-```
-This ensures direct URL navigation and browser refreshes on subroutes never trigger 404 errors.
+1. Create a new project on [Railway](https://railway.app/).
+2. Add a **PostgreSQL** database service.
+3. Add a **GitHub Repo** service pointing to `Victor-430/Chowly`.
+4. In **Settings**:
+   - **Root Directory**: `server`
+   - **Build Command**: `npm install && npm run prisma:generate && npm run build`
+   - **Start Command**: `npm run start`
+5. In **Variables**:
+   - `DATABASE_URL`: `${{Postgres.DATABASE_URL}}` (or your cloud Postgres connection string).
+   - `PORT`: `5000` (or leave Railway to assign `$PORT`).
+   - `NODE_ENV`: `production`
+   - `FRONTEND_URL`: `https://chowly-restaurant.vercel.app` (or your frontend deployment URL).
+6. Run database migrations on Railway:
+   ```bash
+   npx prisma migrate deploy && npm run seed
+   ```
 
 ---
 
-### Server Deployment (Render / Railway / VPS)
+### Frontend Deployment (Vercel / Netlify)
 
-1. Deploy the `server/` directory as a Node.js web service.
-2. Set build command:
-   ```bash
-   npm install && npm run prisma:generate && npm run build
-   ```
-3. Set start command:
-   ```bash
-   npm run start
-   ```
-4. Configure environment variables in the host dashboard:
-   - `DATABASE_URL`: PostgreSQL connection string (with SSL mode required for cloud DBs).
-   - `PORT`: Port assigned by host (e.g., `5000` or `10000`).
-   - `FRONTEND_URL`: The URL of your deployed client application (for CORS whitelist).
+#### Deploying on Vercel:
+1. Connect your GitHub repository to [Vercel](https://vercel.com/).
+2. Configure project settings:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `client`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+3. In **Environment Variables**:
+   - `VITE_API_URL`: `https://chowly.up.railway.app/api` (your deployed Railway API URL).
+4. `vercel.json` in the root automatically rewrites all subroutes (`/customer/*`, `/waiter/*`, `/restaurant/*`) to `index.html` to prevent 404 errors on page refresh.
+
+#### Deploying on Netlify:
+The included `client/public/_redirects` file ensures single-page application routing works out-of-the-box:
+```text
+/*    /index.html   200
+```
 
 ---
 
